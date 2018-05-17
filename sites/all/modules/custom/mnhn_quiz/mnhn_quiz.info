@@ -1,0 +1,8 @@
+;$Id$
+name = Muséum Quiz
+description = Quiz
+package = MUSEUM
+core = 7.x
+version = VERSION
+files[] = mnhn_quiz.module
+dependencies[] = mnhn_content

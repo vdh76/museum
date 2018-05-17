@@ -1,0 +1,22 @@
+<?php
+/*
+ * Module de synchro XML
+ */
+
+require_once('includes/synchro_vdh.inc');
+
+function museum_synchro_menu(){
+         
+     $items['xml/agenda'] = array(
+        'page callback' => 'synchro_vdh',
+        'title' => 'Flux RSS',
+        'access callback' => TRUE,
+        );
+        
+     return $items;
+}
+ 
+function synchro_vdh(){
+    $xml = genere_flux_vdh();
+    print $xml;
+}

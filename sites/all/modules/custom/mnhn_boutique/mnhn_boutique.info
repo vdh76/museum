@@ -1,0 +1,8 @@
+;$Id$
+name = Muséum Boutique
+description = Boutique
+package = MUSEUM
+core = 7.x
+version = VERSION
+files[] = mnhn_boutique.module
+dependencies[] = mnhn_content

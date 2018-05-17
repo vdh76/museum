@@ -1,0 +1,89 @@
+/* ------------------------------------------------------------------------------------------------- all.css */
+/* ------------------------------------------------------------------------------------------------- COMMONS */
+
+.scrollable {
+  overflow: hidden;
+  position: relative; }
+  .scrollable .track {
+    display: none;
+    width: 12px;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    background-color: transparent;
+    -webkit-transition-duration: 200ms;
+    -moz-transition-duration: 200ms;
+    -ms-transition-duration: 200ms;
+    -o-transition-duration: 200ms;
+    transition-duration: 200ms;
+    -webkit-transition-property: background-color;
+    -moz-transition-property: background-color;
+    -ms-transition-property: background-color;
+    -o-transition-property: background-color;
+    transition-property: background-color; }
+    .scrollable .track .thumb {
+      width: 8px;
+      height: 20px;
+      -webkit-border-radius: 8px;
+      -moz-border-radius: 8px;
+      border-radius: 8px;
+      position: absolute;
+      left: 2px;
+      top: 0;
+      background-color: #e6e6e6;
+      -webkit-transition-duration: 200ms;
+      -moz-transition-duration: 200ms;
+      -ms-transition-duration: 200ms;
+      -o-transition-duration: 200ms;
+      transition-duration: 200ms;
+      -webkit-transition-property: background-color;
+      -moz-transition-property: background-color;
+      -ms-transition-property: background-color;
+      -o-transition-property: background-color;
+      transition-property: background-color; }
+      .scrollable .track .thumb:hover {
+        background-color: gray; }
+  .scrollable .track.on {
+    background-color: silver; }
+    .scrollable .track.on .thumb {
+      background-color: black; }
+  .scrollable.active .track {
+    display: block; }
+
+/* ------------------------------------------------------------------------------------------------- COMMONS @end */
+
+/* ------------------------------------------------------------------------------------------------- CONTENT */
+#content {
+  padding: 4px;
+  background: #444444; }
+
+#spaces {
+  width: 952px;
+  min-height: 760px;
+  overflow: hidden; /* ajout David : pour eviter le depassement sur la droite */
+  position: relative;
+  -webkit-transition-property: min-height, width, height, left, top;
+  -moz-transition-property: min-height, width, height, left, top;
+  -ms-transition-property: min-height, width, height, left, top;
+  -o-transition-property: min-height, width, height, left, top;
+  transition-property: min-height, width, height, left, top; }
+
+.moving {
+  position: absolute;
+/*  -webkit-box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+  -moz-box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.4);*/
+  -webkit-transition-property: min-height, width, height, left, top;
+  -moz-transition-property: min-height, width, height, left, top;
+  -ms-transition-property: min-height, width, height, left, top;
+  -o-transition-property: min-height, width, height, left, top;
+  transition-property: min-height, width, height, left, top; }
+  .moving.expanded {
+    z-index: 999; }
+  .moving.static {
+    position: static; }
+
+
+/* ------------------------------------------------------------------------------------------------- CONTENT @end */
+/* ------------------------------------------------------------------------------------------------- all.css @end */

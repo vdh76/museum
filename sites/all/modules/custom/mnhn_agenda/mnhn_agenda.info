@@ -1,0 +1,8 @@
+;$Id$
+name = Muséum Agenda
+description = Agenda 
+package = MUSEUM
+core = 7.x
+version = VERSION
+files[] = mnhn_agenda.module
+dependencies[] = mnhn_content

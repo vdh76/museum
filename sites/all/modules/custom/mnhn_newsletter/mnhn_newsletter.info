@@ -1,0 +1,8 @@
+;$Id$
+name = Muséum Newsletter
+description = Newsletter
+package = MUSEUM
+core = 7.x
+version = VERSION
+files[] = mnhn_newsletter.module
+dependencies[] = mnhn_content

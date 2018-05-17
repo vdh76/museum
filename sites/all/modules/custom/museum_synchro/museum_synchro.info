@@ -1,0 +1,6 @@
+name = Museum synchro
+description = Web services du Museum (agenda VDH).
+core = 7.x
+version = 1.0
+
+package = MUSEUM

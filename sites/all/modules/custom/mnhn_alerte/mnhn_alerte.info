@@ -1,0 +1,8 @@
+;$Id$
+name = Muséum Alerte
+description = Alerte
+package = MUSEUM
+core = 7.x
+version = VERSION
+files[] = mnhn_alerte.module
+dependencies[] = mnhn_content

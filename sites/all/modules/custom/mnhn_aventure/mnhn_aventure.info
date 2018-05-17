@@ -1,0 +1,8 @@
+;$Id$
+name = Muséum Aventure
+description = Aventure
+package = MUSEUM
+core = 7.x
+version = VERSION
+files[] = mnhn_aventure.module
+dependencies[] = mnhn_content

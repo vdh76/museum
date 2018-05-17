@@ -1,0 +1,8 @@
+name = slider_home
+description = Slider de la page d'accueil
+core = 7.x
+package = MUSEUM
+version = 1.0
+
+stylesheets[all][] = css/slider_home.css
+scripts[] = js/slider_home.js

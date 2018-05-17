@@ -1,0 +1,2025 @@
+<?php
+// $Id$ zzz
+
+define('VID_BOUTIQUE',11);
+define('TID_PAPETERIE',49);
+define('TIPI_NUM_CLI','002869');
+
+define('TIPI_CALLBACK','http://'.$_SERVER['SERVER_NAME'].'/tipi');
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// HOOKS
+///////////////////////////////////////////////////////////////////////////////////
+
+
+/**
+ * Implements hook_token_info().
+ */
+function mnhn_boutique_token_info() {
+	$types['boutique'] = array(
+			'name' => t("MNHN boutique"),
+			'description' => t(""),
+	);
+
+	// Andy Pangus specific tokens.
+	$boutique['prefix_invoice'] = array(
+			'name' => t("Prefix invoice"),
+			'description' => t("Prefix invoice"),
+	);
+
+
+	return array(
+			'types' => $types,
+			'tokens' => array(
+					'boutique' => $boutique,
+			),
+	);
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function mnhn_boutique_tokens($type, $tokens, array $data = array(), array $options = array()) {
+
+	$replacements = array();
+
+	if ($type == 'boutique') {
+		foreach ($tokens as $name => $original) {
+			switch ($name) {
+				case 'prefix_invoice':
+						
+								$replacements[$original] = date('Y');
+					
+					break;
+
+			}
+		}
+	}
+
+	return $replacements;
+}
+
+
+/**
+* Implements hook_block_info().
+*/
+function mnhn_boutique_block_info() {
+  
+ 
+  
+   $blocks['menu_boutique'] = array(
+    'info' => t('Menu boutique'),
+    'status' => TRUE,
+    'region' => 'sidebar_first',
+    'weight' => 0,
+    'visibility' => 1,
+  );
+  
+  $blocks['search_boutique'] = array(
+    'info' => t('Recherche Boutique'),
+    'status' => TRUE,
+    'region' => 'sidebar_first',
+    'weight' => 1,
+    'visibility' => 1,
+  );
+  
+   $blocks['menu_user'] = array(
+    'info' => t('Menu Compte'),
+    'status' => TRUE,
+    'region' => 'sidebar_first',
+    'weight' => 0,
+    'visibility' => 1,
+  );
+  
+   
+  
+  
+   
+  
+ 
+ 
+  return $blocks;
+}
+
+
+
+/**
+* Implements hook_block_view().
+*/
+function mnhn_boutique_block_view($delta = '') {
+  switch ($delta) {
+ 
+ 
+  
+   case 'menu_boutique':
+    //$block['subject'] = '';
+   
+   		
+    	 $block['content'] = mnhn_boutique_menu_vertical();
+   		 return $block;
+   	 
+  break;
+  
+  
+  case 'search_boutique':
+    //$block['subject'] = '';
+    $block['content'] = drupal_get_form('mnhn_boutique_search_form');
+    return $block;
+     break;
+     
+    case 'menu_user':
+    //$block['subject'] = '';
+   
+   	$block['content'] = mnhn_boutique_menu_user();
+     return $block;
+   	 
+  break;
+  
+  
+  }
+}
+
+
+function mnhn_boutique_menu_user(){
+
+	global $language;
+	global $user;
+	$list = array();
+	
+	if(arg(1)==$user->uid){
+		$uid=$user->uid;
+		$menu=array('user/'.$uid => t('Mes informations'), 'user/'.$uid.'/commandes' => t('Mes commandes'),'user/'.$uid.'/licensed-files' => t('Mes fichiers'));
+		$list['title']=t('My account');
+	}else{
+		$uid=arg(1);
+		$list['title']=t('Account detail');
+	}
+	//$menu=array('user'=> t('Mes informations'), 'user/'.$user->uid.'/mailchimp' => t('Mes abonnements'),'user/'.$user->uid.'/commandes' => t('Mes commandes'),'user/'.$user->uid.'/licensed-files' => t('Mes fichiers'));
+	$menu=array($language->language.'/user/'.$uid => t('Details'), $language->language.'/user/'.$uid.'/commandes' => t('Orders'), $language->language.'/user/'.$uid.'/licensed-files' => t('Files'));
+				
+	
+	
+	foreach($menu as $key => $value){
+		
+		
+		$list['items'][]=array('data' => '<a href="/'.$key.'">'.$value.'</a>', 'class' => $class);
+	
+	}
+	
+	
+	
+	
+	$list['attributes']['class']='menu-vertical';
+	$output = theme('item_list',$list);
+	return $output;
+	
+		
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function mnhn_boutique_node_view($node, $view_mode, $langcode) {
+	global $language;
+	if($node->type=='boutique'){
+		
+		$breacrumb=array();
+		$breacrumb[]=l(t('Home'), '');
+		$breacrumb[]=l(t('Exhibitions'), 'expositions');
+		
+		drupal_set_breadcrumb($breacrumb);
+	}
+}
+
+function mnhn_boutique_menu_vertical(){
+	global $language;
+	
+	
+		
+	
+		$sql = 'SELECT name,tid from taxonomy_term_data where vid=:vid order by weight asc';
+		$result=db_query($sql,array(':vid' => VID_BOUTIQUE));
+		
+		
+		//$output.='<div class="exposition-liste">';
+		$list=array();
+		if(arg(0)=='boutique' && arg(1)==''){
+				$class='activ';
+		}
+		$list['items'][]=array('data' => '<a href="/'.$language->language.'/'.drupal_get_path_alias('boutique').'">'.t('All products').'</a>'.$links, 'class' => $class);
+		$events=0;
+		foreach($result as $row){
+			$class='';
+			if(arg(0)=='boutique' && arg(1)==$row->tid){
+					$class='activ';
+			}
+			$term=taxonomy_term_load($row->tid);
+			$term_translate=i18n_taxonomy_term_name($term, $language->language);
+		
+			$list['items'][]=array('data' => '<a href="/'.$language->language.'/'.drupal_get_path_alias('boutique/'.$row->tid).'">'.$term_translate.'</a>'.$links, 'class' => $class, 'rel' => $row->tid);
+		}	
+		
+
+		
+		
+		
+	
+	
+	$list['title']=t('Shop');
+	$list['attributes']['class']='menu-vertical';
+	$output = theme('item_list',$list);
+	return $output;
+	
+		
+}
+
+
+
+
+
+
+
+/**
+ * Implementation of hook_theme()
+ */
+function mnhn_boutique_theme(){
+	return array(
+		
+	'menu-xl-item-boutique' => array(
+			'variables' => array('boutique' => NULL),
+     		'template' => 'menu-xl-item-boutique'),
+	
+	'focus-produit' => array(
+			'variables' => array('node' => NULL),
+     		'template' => 'focus-produit'),
+	
+	'commande' => array(
+			'variables' => array('order_id' => NULL,'status' => NULL,'date' => NULL),
+     		'template' => 'commande'),
+	
+	);	
+	
+}	
+
+
+
+/**
+ * Implementation of hook_menu().
+ */
+function mnhn_boutique_menu() {
+	
+	 $items['boutique'] = array(
+    'title' => 'Boutique',
+    'page callback' => 'mnhn_boutique_liste',
+	'page arguments' => array(''),
+  	'access arguments' => array('access content'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+	 
+	 $items['paiement'] = array(
+	 		'title' => 'Paiement',
+	 		'page callback' => 'mnhn_boutique_paiement',
+	 		'page arguments' => array(''),
+	 		'access arguments' => array('access content'),
+	 		'type' => MENU_CALLBACK,
+	 );
+	 
+	 $items['confirmation-paiement'] = array(
+	 		'title' => 'Confirmation paiement',
+	 		'page callback' => 'mnhn_boutique_confirmation_paiement',
+	 		'page arguments' => array(''),
+	 		'access arguments' => array('access content'),
+	 		'type' => MENU_CALLBACK,
+	 );
+	 
+	 $items['tipi'] = array(
+	 		'title' => 'Confirmation paiement',
+	 		'page callback' => 'mnhn_boutique_tipi',
+	 		'page arguments' => array(''),
+	 		'access arguments' => array('access content'),
+	 		'type' => MENU_CALLBACK,
+	 );
+  
+   $items['cart/empty'] = array(
+    'title' => 'Empty Cart',
+    'access arguments' => array('access content'), // or whatever permission you want
+    'page callback' => 'mnhn_boutique_empty_cart',
+    'type' => MENU_CALLBACK
+  );
+  
+  $items['product/add/%/%/%'] = array (
+    'page callback' => 'mnhn_boutique_product_add',
+    'page arguments' => array(2,3,4),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['user/%user/commandes'] = array(
+    'title' => 'Commandes',
+    'access callback' => 'user_edit_access',
+    'access arguments' => array(1),
+    'page callback' => 'mnhn_boutique_user_commandes',
+    'type' => MENU_CALLBACK
+  );
+  
+  $items['cart/user'] = array(
+    'title' => 'Mon Panier',
+    'access arguments' => array('access content'), // or whatever permission you want
+    'page callback' => 'mnhn_boutique_user_cart',
+    'type' => MENU_CALLBACK
+  );
+  
+   $items['cart/user/register'] = array(
+    'title' => 'Mon Panier',
+    'access arguments' => array('access content'), // or whatever permission you want
+    'page callback' => 'mnhn_boutique_user_cart_register',
+    'type' => MENU_CALLBACK
+  );
+  
+   
+   
+   
+   $items['admin/mhnh/boutique'] = array(
+   		'title' => 'Boutique ',
+   		'type' => MENU_NORMAL_ITEM,
+   		'page callback' => 'drupal_get_form',
+   		'page arguments' => array('mnhn_boutique_poids_admin_settings'),
+   		'access arguments' => array('mnhn'),
+   		'file' => 'mnhn_boutique_admin.inc',
+   		'weight' => 1,
+   );
+    
+   
+   $items['admin/mhnh/boutique/poids'] = array(
+   		'title' => 'Frais de port / Poids',
+   		'type' => MENU_DEFAULT_LOCAL_TASK,
+   		'weight' => -10,
+   );
+    
+   $items['admin/mhnh/boutique/fr'] = array(
+   		'title' => 'Frais de port / Zone France',
+   		'page callback' => 'drupal_get_form',
+   		'page arguments' => array('mnhn_boutique_prix_admin_settings'),
+   		'access arguments' => array('mnhn'),
+   		'type' => MENU_LOCAL_TASK,
+   		'file' => 'mnhn_boutique_admin.inc',
+   		'weight' => 0,
+   );
+    
+   
+   $items['admin/mhnh/boutique/ue'] = array(
+   		'title' => 'Frais de port / Zone UE',
+   		'page callback' => 'drupal_get_form',
+   		'page arguments' => array('mnhn_boutique_prix_admin_settings'),
+   		'access arguments' => array('mnhn'),
+   		'type' => MENU_LOCAL_TASK,
+   		'file' => 'mnhn_boutique_admin.inc',
+   		'weight' => 2,
+   );
+   
+   $items['admin/mhnh/boutique/world'] = array(
+   		'title' => 'Frais de port / Zone monde',
+   		'page callback' => 'drupal_get_form',
+   		'page arguments' => array('mnhn_boutique_prix_admin_settings'),
+   		'access arguments' => array('mnhn'),
+   		'type' => MENU_LOCAL_TASK,
+   		'file' => 'mnhn_boutique_admin.inc',
+   		'weight' => 3,
+   );
+   
+   $items['admin/mhnh/boutique/settings'] = array(
+   		'title' => 'Configuration',
+   		'page callback' => 'drupal_get_form',
+   		'page arguments' => array('mnhn_boutique_configuration_settings'),
+   		'access arguments' => array('mnhn'),
+   		'type' => MENU_LOCAL_TASK,
+   		'file' => 'mnhn_boutique_admin.inc',
+   		'weight' => 4,
+   );
+   
+   $items['boutique/autocomplete'] = array(
+   		'page callback' => 'mnhn_boutique_autocomplete',
+   		'access arguments' => array('access content'),
+   		'type' => MENU_CALLBACK
+   );
+   
+ 
+  return $items;
+}
+
+
+/**
+ * Implements hook_menu_alter().
+ */
+function mnhn_boutique_menu_alter(&$items) {
+	$items['user/%user/edit']['theme callback'] = 'mnhn_boutique_custom_get_default_theme';
+	$items['user/%user/addressbook/billing/edit/%commerce_customer_profile']['theme callback'] = 'mnhn_boutique_custom_get_default_theme';
+	$items['user/%user/addressbook/shipping/edit/%commerce_customer_profile']['theme callback'] = 'mnhn_boutique_custom_get_default_theme';
+	$items['user/%user/addressbook/shipping/delete/%commerce_customer_profile']['theme callback'] = 'mnhn_boutique_custom_get_default_theme';
+	$items['user/%user/addressbook/billing/delete/%commerce_customer_profile']['theme callback'] = 'mnhn_boutique_custom_get_default_theme';
+
+
+
+}
+
+
+/**
+ * Implements hook_form_alter().
+ */
+function mnhn_boutique_form_alter(&$form, &$form_state, $form_id) {
+	global $language;
+	global $user;
+	//dsm($form_id);  // print form ID to messages
+	//dsm($form);  // pretty print array using Krumo to messages
+
+	/*
+	 if (strstr($form_id, 'commerce_cart_add_to_cart_form')) {
+	$form['submit'] = array(
+			'#value' => t('Add to Cart'),
+			'#type' => 'submit',
+			'#ajax' => array(
+					'callback' => 'mnhn_boutique_cart_form',
+					'wrapper' => 'message_add_cart',
+					'method' => 'replace',
+					'effect' => 'fade',
+					'progress' => array('type' => 'throbber', 'message' => ''),
+			),
+	);
+		
+	}
+	*/
+	switch($form_id){
+
+		case 'mailchimp_lists_user_subscribe_form':
+			drupal_add_js('
+
+			jQuery(function() {
+			    jQuery("ul.menu-vertical li:eq(1)").addClass("activ");
+			 
+			    jQuery(".link_black").click(function(){
+
+			    	jQuery("#mailchimp-lists-user-subscribe-form").submit();
+			    });
+			   });
+			 ','inline');
+			$header_user=mnhn_boutique_header_user(t('Mes abonnements'));
+			$form["#prefix"]='<div class="compte-detail-wrapper">
+			'.$header_user;
+			$form['mailchimp_lists']['mailchimp_lettre_mnhn']['#prefix']='<fieldset>
+            <h3 class="greytitle">Gérer mes abonnements</h3>
+            <p class="explain">Cochez / décochez les flux auquels vous souhaitez vous abonner :</p>';
+			$form['mailchimp_lists']['mailchimp_lettre_mnhn']['#suffix']='</fieldset><a class="link_black" href="#">Enregistrer</a><br/><span class="form-required" title="Ce champ est obligatoire.">*</span> Champs obligatoire';
+			$form["#suffix"]='</div>';
+			break;
+				
+				
+		case 'commerce_addressbook_profile_options_delete_form':
+			drupal_add_js('
+
+			jQuery(function() {
+			    jQuery("ul.menu-vertical li:eq(0)").addClass("activ");
+		
+			    jQuery(".link_black").click(function(){
+
+			    	jQuery("#commerce-addressbook-customer-profile-form").submit();
+			    });
+			   });
+			 ','inline');
+				
+				
+			$header_user=mnhn_boutique_header_user(t('Mes informations'));
+			$form["#prefix"]='<div class="compte-detail-wrapper">
+			'.$header_user.'<h2 class="greytitle">Adresses enregistrées</h2>';
+				
+			$form["#suffix"]='</div>';
+			$form["#redirect"]='/user';
+			$form['#submit'][] = 'mnhn_boutique_adresses_submit_handler';
+				
+			$breacrumb=array();
+			$breacrumb[]=l(t('Home'), '');
+			$breacrumb[]=l(t('Mes informations'), 'user');
+				
+			drupal_set_breadcrumb($breacrumb);
+				
+				
+			break;
+				
+				
+		case 'commerce_addressbook_customer_profile_form':
+			drupal_add_js('
+		
+			jQuery(function() {
+			    jQuery("ul.menu-vertical li:eq(0)").addClass("activ");
+
+			    jQuery(".link_black").click(function(){
+		
+			    	jQuery("#commerce-addressbook-customer-profile-form").submit();
+			    });
+			   });
+			 ','inline');
+				
+				
+			$header_user=mnhn_boutique_header_user(t('Mes informations'));
+			$form["#prefix"]='<div class="compte-detail-wrapper">
+			'.$header_user.'<h2 class="greytitle">Adresses enregistrées</h2>';
+				
+			$form['actions']['submit']['#suffix']='<a class="link_black" href="#">Enregistrer</a><br/><span class="form-required" title="Ce champ est obligatoire.">*</span> Champs obligatoire';
+			$form["#suffix"]='</div>';
+			$form["#redirect"]='/user';
+			$form['#submit'][] = 'mnhn_boutique_adresses_submit_handler';
+				
+			$breacrumb=array();
+			$breacrumb[]=l(t('Home'), '');
+			$breacrumb[]=l(t('Mes informations'), 'user');
+				
+			drupal_set_breadcrumb($breacrumb);
+				
+				
+			break;
+				
+				
+		case 'user_profile_form':
+			//print_r($form);
+			//exit;
+				
+			drupal_add_js('
+
+			jQuery(function() {
+			    jQuery("ul.menu-vertical li:eq(0)").addClass("activ");
+			 
+			    jQuery(".link_black").click(function(){
+			    	jQuery("#user-profile-form").submit();
+			    });
+			   });
+			 ','inline');
+			$header_user=mnhn_boutique_header_user(t('My details'));
+			$form["#prefix"]='<div class="compte-detail-wrapper">
+			'.$header_user;
+			$form['account']['#prefix']='<h2 class="greytitle">'.t('Account details').'</h2>';
+			$form['actions']['submit']['#suffix']='<a class="link_black" href="#">'.t('Save').'</a><br/><span class="form-required" title="Ce champ est obligatoire.">*</span> '.t('Required');
+			$form["#suffix"]='</div>';
+			$form['field_user_newsletter']['und']['#prefix']='<label>'.t('Subscriptions').'</label>';
+			$form['field_user_newsletter']['und']['#description']=t('Monthly e-news');
+			$form['field_user_nom']['und'][0]['value']['#title']=t('Last name');
+			$form['field_user_prenom']['und'][0]['value']['#title']=t('First name');
+			break;
+				
+				
+		case 'user_login':
+				
+			if(arg(0)=='checkout'){
+				$order_id = commerce_cart_order_id($user->uid);
+				$header='<ol id="steps" class="step1">
+                            <li class="etape1 selected"><a href="/'.$language->language.'/'.drupal_get_path_alias('cart').'" title="'.t('My cart').'">'.t('My cart').'</a></li>
+                            <li class="etape2 selected">'.t('Log in !cart',array('!cart'=> '')).'</li>
+                            <li class="etape3">'.t('Identification').'</li>
+                            <li class="etape4">'.t('Payment').'</li>
+                        </ol>
+
+                    </div>
+
+                    <div class="page-detail-wrapper">
+                    <h2 class="greytitle_lg">'.t('Please log in to continue your order').'</h2>';
+				//$form["#action"]='/'.$language->language.'/checkout';
+				$checkout_path='checkout/'.$order_id.'/';
+
+			}else{
+				$header='<h1>'.t('Sign !strong_start in !strong_end',array('!strong_start'=>'<strong>','!strong_end'=> '</strong>')).'</h1>
+
+                    </div>
+
+                    <div class="page-detail-wrapper">
+
+                        <h2 class="greytitle_lg">'.t('You have to sign in to access your account').'</h2>';
+
+			}
+				
+			drupal_add_js('
+
+			jQuery(function() {
+			    jQuery(".link_black").click(function(){
+			    	jQuery("#user-login").submit();
+			    });
+			   });
+			 ','inline');
+			$form['#attributes'] = array('class' => 'acces');
+			$form["#prefix"]='<div class="page-header">
+                       '.$header.'
+
+
+                        <div class="acces acces_crea_compte">
+                            <h2>'.t('Don\'t have a Natural History Museum online account ?').'</h2>
+                            <p>'.t('Register here to buy online and  track your orders.').'</p>
+                            <a href="/'.$language->language.'/'.$checkout_path.'user/register" class="link_black">'.t('Register here').'</a>
+                        </div>';
+				
+			$form['name']['#prefix']='<h2>'.t('Already have an account ?').'</h2><p>'.t('Sign in').' ...</p>';
+			$form['pass']['#suffix']=l(t('Forgot your password ?'), 'user/password', array('attributes' => array('class' =>  array('help'))));
+			$form['actions']['submit']['#suffix']='<a class="link_black" href="#">'.t('Save').'</a><br/><br/><br/><span class="form-required" title="Ce champ est obligatoire.">*</span> '.t('Required');
+			$form["#suffix"]='</div>';
+				
+			break;
+
+		case 'user_pass':
+				
+
+			drupal_add_js('
+
+			jQuery(function() {
+			    jQuery(".link_black").click(function(){
+			    	jQuery("#user-pass").submit();
+			    });
+			   });
+			 ','inline');
+				
+			$form["#prefix"]='<div class="page-header">
+
+                        <h1>'.t('Forgot your !strong_start password !strong_end ?',array('!strong_start'=>'<strong>','!strong_end'=>'</strong>')).'</h1>
+                    </div>
+                    <div class="page-detail-wrapper">';
+				
+			$form['name']['#prefix']=' <p>'.t('If you have forgotten your password or want to change it, please enter your e-mail address. Instructions on how to reset your password will be sent to you.').' :</p>';
+			$form['actions']['submit']['#suffix']='<a class="link_black" href="#">'.t('Submit').'</a><br/><span class="form-required" title="Ce champ est obligatoire.">*</span>'.t('Required');
+			$form["#suffix"]='</div>';
+				
+			break;
+
+				
+		case 'user_register_form':
+				
+
+			drupal_add_js('
+
+			jQuery(function() {
+			    jQuery(".link_black").click(function(){
+			    	jQuery("#user-register-form").submit();
+			    });
+			   });
+			 ','inline');
+				
+			$form["#prefix"]='<div class="page-header">
+
+                        <h1>'.t('Create !strong_start an account !strong_end',array('!strong_start'=>'<strong>','!strong_end'=>'</strong>')).'</h1>
+
+                        <h2>'.t('Welcome on Le Havre Natural History Museum website. Register here to buy online and  track your orders.').'</h2>
+                        <p class="info">'.t('Users are entitled to access and rectify personal data which concerns them, in line with the provisions stipulated in law N° 78.17 of 6th January 1978').'</p>
+
+                    </div>
+
+                    <div class="page-detail-wrapper">';
+			$form['field_user_newsletter']['und']['#prefix']='<label>'.t('Subscriptions').'</label>';
+			$form['field_user_newsletter']['und']['#description']=t('Monthly e-news');
+			$form['field_user_nom']['und'][0]['value']['#title']=t('Last name');
+			$form['field_user_prenom']['und'][0]['value']['#title']=t('First name');
+			$form['account']['#prefix']='<h2 class="greytitle">'.t('Account details').'</h2>';
+			$form['actions']['submit']['#suffix']='<a class="link_black" href="#">'.t('Register').'</a><br/><span class="form-required" title="Ce champ est obligatoire.">*</span>'.t('Required');
+			$form["#suffix"]='</div>';
+			/*
+			 $form['mailchimp_lists']['#weight']=10;
+			$form['mailchimp_lists']['#prefix']='<label>Abonnement</label>';
+			*/
+
+				
+			break;
+				
+				
+		case 'commerce_checkout_form_checkout':
+				
+			//$form['buttons']['continue']['#submit'][] = 'mnhn_boutique_checkout_validate';
+				
+				
+			$account = user_load($user->uid);
+			$prenom=ucfirst(strtolower($account->field_user_prenom['und'][0]['value']));
+			$nom=ucfirst(strtolower($account->field_user_nom['und'][0]['value']));
+			$order_id = commerce_cart_order_id($user->uid);
+			drupal_add_js('
+
+			
+
+
+				jQuery(function() {
+					 jQuery(".component-type-commerce-price-formatted-amount .component-title").html("'.t('Order total').'");
+					 jQuery(".component-type-taxtva .component-title").html("'.t('VAT').'");
+					 jQuery("#edit-customer-profile-billing legend span").html("'.t('Billing information').'");
+					 jQuery("#edit-customer-profile-shipping legend span").html("'.t('Shipping information').'");
+					/*
+					 jQuery(".duplicate_profile input").live("click", function(){
+
+						if(jQuery(this).is(":checked")){
+									jQuery("#edit-customer-profile-shipping .country").val(jQuery("#edit-customer-profile-billing .country").val());
+									jQuery("#edit-customer-profile-shipping .name-block .first-name").val(jQuery("#edit-customer-profile-billing .name-block .first-name").val());
+									jQuery("#edit-customer-profile-shipping .name-block .last-name").val(jQuery("#edit-customer-profile-billing .name-block .last-name").val());
+									jQuery("#edit-customer-profile-shipping .thoroughfare").val(jQuery("#edit-customer-profile-billing .thoroughfare").val());
+									jQuery("#edit-customer-profile-shipping .premise").val(jQuery("#edit-customer-profile-billing .premise").val());
+									jQuery("#edit-customer-profile-shipping .postal-code").val(jQuery("#edit-customer-profile-billing .postal-code").val());
+									jQuery("#edit-customer-profile-shipping .locality").val(jQuery("#edit-customer-profile-billing .locality").val());
+									jQuery("#edit-customer-profile-shipping .state").val(jQuery("#edit-customer-profile-billing .state").val());
+							}
+
+
+					});
+						*/
+				   jQuery(".prix_total span").html(jQuery(".component-type-commerce-price-formatted-amount .component-total").html());
+				   jQuery("#edit-customer-profile-billing select,#edit-customer-profile-shipping select").addClass("select");
+				   jQuery(".link_cart_checkout").click(function(){
+						jQuery("#commerce-checkout-form-checkout").submit();
+				   });
+				
+
+				
+				
+				});','inline');
+
+			$form['cart_contents']['cart_contents_view']['#suffix']='
+			<div class="infos_compte">
+			     <h2 class="greytitle">'.t('Account details').'</h2>
+			     <p class="info">'.t('User\'s name').' : <strong>'.$prenom.' '.$nom.'</strong></p>
+			     <p class="info">'.t('Email').' : : <strong>'.$user->mail.'</strong></p>
+			     <a href="/user/'.$user->uid.'/edit?destination=checkout/'.$order_id.'" class="link">'.t('Update your details').'</a>
+			</div>';
+			/*
+			 $form['customer_profile_billing']['#suffix']='<h2 class="greytitle">Adresse de livraison</h2>';
+			*/
+			//$form['customer_profile_shipping']['#prefix']='<h2 class="greytitle">Adresse de livraison</h2>';
+				
+			$form['#prefix']='<div class="page-header">
+
+                        <h1><strong>'.t('Identification').'</strong></h1>
+
+                        <ol id="steps" class="step1">
+                            <li class="etape1 selected"><a href="/'.$language->language.'/'.drupal_get_path_alias('cart').'" title="'.t('My cart').'">'.t('My cart').'</a></li>
+                            <li class="etape2 selected">'.t('Log in !cart',array('!cart'=> '')).'</li>
+                            <li class="etape3 selected">'.t('Identification').'</li>
+                            <li class="etape4">'.t('Payment').'</li>
+                        </ol>
+
+                    </div>
+
+                    <div class="page-detail-wrapper">
+
+                        <h2 class="greytitle_lg">'.t('Your cart').'</h2>';
+				
+			$form['#suffix']='
+		
+			<p class="explain">* '.t('Required').'</p>
+        					 <div class="bt_continue_checkout">
+                            <a href="/'.$language->language.'/cart" class="link_back">'.t('Previous step').'</a>
+                             <a href="javascript:;" class="link_black link_cart_checkout">'.t('Continue my order').'</a>
+                             </div></div>';
+
+			break;
+				
+				
+				
+		case 'commerce_checkout_form_shipping':
+			//$weight=mnhn_boutique_total_weight();
+			$order = commerce_cart_order_load($user->uid);
+
+			$frais_de_port=$order->shipping_rates['frais_de_port'];
+			$montant_frais_de_port=$frais_de_port->commerce_unit_price['und'][0]['amount'];
+			if($montant_frais_de_port>0){
+				$montant_frais_de_port=number_format(($montant_frais_de_port/100), 2, ',', '');
+			}
+			//drupal_goto('checkout/'.arg(1).'/review');
+
+			drupal_add_js('
+			
+					 function reload(){
+						      jQuery("#commerce-checkout-form-shipping").submit();
+						   }
+			
+					jQuery(function() {
+						//jQuery("#commerce-checkout-form-shipping").submit();
+						//jQuery("#edit-commerce-shipping-service-details").html("<br/>Envoi postal : '.$montant_frais_de_port.' €");
+					    //jQuery(".link_cart_checkout").click(function(){
+      					setTimeout("reload()",500);
+					   //});
+			});','inline');
+				
+				
+			$form['#prefix']='<div class="page-header">
+
+                        <h1><strong>'.t('Identification').'</strong></h1>
+
+                        <ol id="steps" class="step1">
+                            <li class="etape1 selected"><a href="/'.$language->language.'/'.drupal_get_path_alias('cart').'" title="'.t('My cart').'">'.t('My cart').'</a></li>
+                            <li class="etape2 selected">'.t('Log in !cart',array('!cart'=> '')).'</li>
+                            <li class="etape3 selected">'.t('Identification').'</li>
+                            <li class="etape4">'.t('Payment').'</li>
+                        </ol>
+
+                    </div>
+
+                    <div class="page-detail-wrapper">
+
+                        <h2 class="greytitle_lg">'.t('Valuation shipping costs').'</h2>
+                        <div class="clearfix"></div>
+                         <div class="progress"></div></div>';
+			/*
+			 $form['#suffix']='
+			<div id="adress_livraison"></div><div class="bt_continue_review">
+			<a href="/'.$language->language.'/checkout/'.$order_id.'" class="link_back">Étape précédente</a>
+			<a href="javascript:;" class="link_black link_cart_checkout">Poursuivre ma commande</a>
+			</div></div>';
+			*/
+			break;
+				
+				
+				
+		case 'commerce_checkout_form_review':
+			$account = user_load($user->uid);
+			$prenom=ucfirst(strtolower($account->field_user_prenom['und'][0]['value']));
+			$nom=ucfirst(strtolower($account->field_user_nom['und'][0]['value']));
+			$order_id = commerce_cart_order_id($user->uid);
+			$order=commerce_order_load($order_id);
+			$amount=$order->commerce_order_total['und'][0]['amount'];
+			$statut_tipi=variable_get('mnhn_boutique_tipi_statut', 'Test');
+			
+			
+
+			if($statut_tipi==0){
+				$code_saisie='T';
+			}elseif($statut_tipi==1){
+				$code_saisie='X';
+			}if($statut_tipi==2){
+				$code_saisie='A';
+			}
+				
+				
+			drupal_add_js('jQuery(function() {
+		   jQuery(".component-type-flat-rate-frais-de-port .component-title").html("'.t('Shipping costs').'");
+		   jQuery(".component-type-taxtva .component-title").html("'.t('VAT').'");
+		   jQuery(".component-type-commerce-price-formatted-amount .component-title").html("'.t('Order total').'");
+		   jQuery(".prix_total span").html(jQuery(".component-type-commerce-price-formatted-amount .component-total").html());
+		   jQuery("#edit-customer-profile-billing select,#edit-customer-profile-shipping select").addClass("select");
+		   jQuery(".link_cart_checkout").click(function(){
+				//jQuery("#commerce-checkout-form-review").submit();
+					var url_tipi="https://www.tipi.budget.gouv.fr/tpa/paiement.web?numcli='.TIPI_NUM_CLI.'&exer='.date('Y').'&refdet='.date('Y').$order_id.'&objet=MUSEUM&montant='.$amount.'&mel='.$user->mail.'&urlcl='.TIPI_CALLBACK.'&saisie='.$code_saisie.'";
+					//var url_tipi="/sites/all/themes/mnhn/templates/popup_paiement.php?amount='.$amount.'";
+			
+					window.open(url_tipi,"tipi","height=750, width=900,toolbar=no, menubar=no, scrollbars=no, resizable=yes, location=no, directories=no, status=no");
+					window.location.href="/'.$language->language.'/paiement";
+							//tipi.onbeforeunload=window.location.reload();​
+		   });
+		
+		
+		
+		
+		
+		
+		
+		});','inline');
+				
+				
+				
+				
+				
+				
+			$order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+			foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
+				// @todo change price.
+					
+					
+				$line_item = $line_item_wrapper->value();
+
+				if($line_item->type=='shipping'){
+
+					rules_invoke_event('commerce_line_item_unit_price_amount', $line_item, 0, 'flat_rate_frais_de_port', COMMERCE_ROUND_NONE);
+					commerce_line_item_save($line_item);
+				}
+			}
+				
+				
+				
+				
+				
+			$countries=country_get_list();
+			$profile_id_billing=mnhn_boutique_billing_profile_id();
+			$profile_id_shipping=mnhn_boutique_shipping_profile_id();
+			$billing=commerce_customer_profile_load($profile_id_billing);
+			$shipping=commerce_customer_profile_load($profile_id_shipping);
+				
+				
+			if(!empty($billing->commerce_customer_address['und'][0]['organisation_name'])){
+				$billing_organization=$billing->commerce_customer_address['und'][0]['organisation_name'].'<br/>';
+			}
+			$billing_first_name=$billing->commerce_customer_address['und'][0]['first_name'];
+			$billing_last_name=$billing->commerce_customer_address['und'][0]['last_name'];
+			$billing_adress_1=$billing->commerce_customer_address['und'][0]['thoroughfare'];
+			$billing_adress_2=$billing->commerce_customer_address['und'][0]['premise'];
+			if(!empty($billing_adress_2)){
+				$billing_adress_2.='<br/>'.$billing_adress_2;
+			}
+			$billing_cp=$billing->commerce_customer_address['und'][0]['postal_code'];
+			$billing_city=$billing->commerce_customer_address['und'][0]['locality'];
+			if(!empty($billing->commerce_customer_address['und'][0]['state'])){
+				$billing_state=$billing->commerce_customer_address['und'][0]['state'].' ';
+			}
+			$billing_country=$billing_state.$countries[$billing->commerce_customer_address['und'][0]['country']];
+				
+			if(!empty($shipping->commerce_customer_address['und'][0]['organisation_name'])){
+				$shipping_organization=$shipping->commerce_customer_address['und'][0]['organisation_name'].'<br/>';
+			}
+			$shipping_first_name=$shipping->commerce_customer_address['und'][0]['first_name'];
+			$shipping_last_name=$shipping->commerce_customer_address['und'][0]['last_name'];
+			$shipping_adress_1=$shipping->commerce_customer_address['und'][0]['thoroughfare'];
+			$shipping_adress_2=$shipping->commerce_customer_address['und'][0]['premise'];
+			if(!empty($shipping_adress_2)){
+				$shipping_adress_2.='<br/>'.$shipping_adress_2;
+			}
+			$shipping_cp=$shipping->commerce_customer_address['und'][0]['postal_code'];
+			$shipping_city=$shipping->commerce_customer_address['und'][0]['locality'];
+			if(!empty($shipping->commerce_customer_address['und'][0]['state'])){
+				$shipping_state=$shipping->commerce_customer_address['und'][0]['state'].' ';
+			}
+			$shipping_country=$shipping_state.$countries[$shipping->commerce_customer_address['und'][0]['country']];
+				
+			$form['#prefix']='<div class="page-header">
+
+                        <h1><strong>'.t('Review').'</strong></h1>
+
+                        <ol id="steps" class="step1">
+                            <li class="etape1 selected"><a href="/'.$language->language.'/'.drupal_get_path_alias('cart').'" title="'.t('My cart').'">'.t('My cart').'</a></li>
+                            <li class="etape2 selected">'.t('Log in !cart',array('!cart'=> '')).'</li>
+                            <li class="etape3 selected"><a href="/'.$language->language.'/checkout/'.$order_id.'" title="Informations">'.t('Identification').'</a></li>
+                            <li class="etape4 selected">'.t('Payment').'</li>
+                        </ol>
+
+                    </div>
+
+                    <div class="page-detail-wrapper">
+
+                        <h2 class="greytitle_lg">'.t('My cart').'</h2>';
+				
+			$form['#suffix']='
+							<div class="infos_compte">
+						     <h2 class="greytitle">'.t('Account details').'</h2>
+						     <p class="info">'.t('User\'s name').' : <strong>'.$prenom.' '.$nom.'</strong></p>
+						     <p class="info">'.t('Email').' : <strong>'.$user->mail.'</strong></p>
+						     <a href="/user/'.$user->uid.'/edit?destination=checkout/'.$order_id.'/review" class="link">'.t('Update your details').'</a>
+						</div>
+
+						 <div id="adress_livraison">
+						    <h2 class="greytitle">'.t('Billing information').'</h2>
+						    <p class="adress">'.$billing_organization.$billing_first_name.' '.$billing_last_name.'<br />'.$billing_adress_1.$billing_adress_2.'<br />'.$billing_cp.' '.$billing_city.'<br />'.$billing_country.'</p>
+						    <a href="/'.$language->language.'/checkout/'.$order_id.'" class="link">'.t('Update your details').'</a>
+						</div>
+
+						 <div id="adress_livraison">
+						    <h2 class="greytitle">'.t('Shipping information').'</h2>
+						    <p class="adress">'.$shipping_organization.$shipping_first_name.' '.$shipping_last_name.'<br />'.$shipping_adress_1.$shipping_adress_2.'<br />'.$shipping_cp.' '.$shipping_city.'<br />'.$shipping_country.'</p>
+						    <a href="/'.$language->language.'/checkout/'.$order_id.'" class="link">'.t('Update your details').'</a>
+						</div>
+
+        					 <div class="bt_continue_review">
+                            <a href="/'.$language->language.'/checkout/'.$order_id.'" class="link_back">'.t('Previous step').'</a>
+                             <a href="javascript:;" class="link_black link_cart_checkout">'.t('Proceed to checkout').'</a>
+                             </div></div>';
+			break;
+				
+				
+				
+				
+		case 'commerce_checkout_form_complete':
+			$form['#prefix']='<div class="page-header">
+
+                        <h1>'.t('My !strong_debut cart !strong_fin',array('!strong_debut'=>'<strong>','!strong_fin'=>'</strong>')).'</h1>
+
+                    </div>
+
+                    <div class="page-detail-wrapper">
+                        <div id="confirm">
+                            <h2 class="greytitle_lg">'.t('Confirmation of the order').'</h2>
+                            <h3 class="checked">'.t('Your purchase is completed!').'</h3>
+                            <p>'.t('Follow your order in !url when logged in',array('!url'=>l(t('your account'),'user'))).'
+                            <a href="/'.$language->language.'" class="link_black">'.t('Back to homepage').'</a>
+                        </div>
+                    </div>';
+				
+				
+			break;
+				
+
+				
+	}
+
+
+}
+
+/**
+ * Implements hook_taxonomy_term_presave().
+ */
+function mnhn_boutique_taxonomy_term_presave($term){
+	if($term->vid==VID_BOUTIQUE){
+		module_load_include('inc', 'pathauto', 'pathauto');
+		db_query('delete from url_alias where source=:source',array(':source' => 'boutique/'.$term->tid));
+		path_save($a = array('source' => 'boutique/'.$term->tid, 'alias' => 'boutique/'.pathauto_cleanstring($term->name), 'pid' => $pid, 'language'=>'fr'));
+	}
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// COMMANDE PAIEMENT 
+///////////////////////////////////////////////////////////////////////////////////
+
+
+/*
+ * TRAITEMENT CALLBACK TIPI
+ * 
+ */
+function mnhn_boutique_tipi(){
+	
+	
+	
+	watchdog('mnhn_boutique', 'Test paiement');
+	
+	
+	// onunload="window.opener.location.href='http://museum.dev/fr/boutique'"
+	if($_POST['resultrans']=="P"){
+		
+		$mail=$_POST['mel'];
+		$uid=db_query('select uid from users where mail=:mail',array('mail'=> $mail))->fetchField();
+		$montant=$_POST['montant'];
+		$num_auto=$_POST['numauto'];
+		$ref=$_POST_['refdet'];
+		$payment_method=commerce_payment_method_load('tipi');
+		$order = commerce_cart_order_load($uid);
+		$charge=array('amount'=>$montant,'currency_code'=>'EUR');
+	
+		mnhn_boutique_transaction($payment_method, $order, $charge, $num_auto);
+		commerce_order_status_update($order, 'completed');
+		
+		watchdog('mnhn_boutique', 'Paiement TIPI accepté / ref :'.$ref.' / montant : '.$montant);
+	
+	}
+	
+	if($_POST['resultrans']=="R"){
+		watchdog('mnhn_boutique', 'Paiement TIPI refusé / ref :'.$ref.' / montant : '.$montant);
+	}
+	
+}
+
+/*
+ * Commande paiement
+*
+*/
+function mnhn_boutique_paiement(){
+	global $user;
+	global $language;
+	$order_id = commerce_cart_order_id($user->uid);
+	$bloc_tipi = variable_get('mnhn_boutique_tipi_'.$language->language, $defaults);
+	$output='
+			<div class="page-header">
+                    
+                        <h1><strong>'.t('Payment').'</strong></h1>
+                        
+                        <ol id="steps" class="step1">
+                            <li class="etape1 selected"><a href="/'.$language->language.'/'.drupal_get_path_alias('cart').'" title="'.t('My cart').'">'.t('My cart').'</a></li>
+                            <li class="etape2 selected">'.t('Log in !cart',array('!cart'=> '')).'</li>
+                            <li class="etape3 selected"><a href="/'.$language->language.'/checkout/'.$order_id.'" title="Informations">'.t('Identification').'</a></li>
+                            <li class="etape4 selected">'.t('Payment').'</li>
+                        </ol>
+
+                    </div>
+    
+                    <div class="page-detail-wrapper">
+                            		  <h2 class="greytitle_lg">'.t('Proceed to checkout').'</h2>
+                            		<div style="padding:20px 50px 20px 20px"> 
+                            		'.$bloc_tipi['value'].'
+                            		</div>
+                            		 <div class="bt_continue_review">
+                            <a href="/'.$language->language.'/checkout/'.$order_id.'/review" class="link_back">'.t('Previous step').'</a>
+                             <a href="/'.$language->language.'/checkout/'.$order_id.'/review" class="link_black link_cart_checkout">'.t('Complete the order').'</a>
+                             </div>
+                            		
+                            		</div>
+			';
+	
+	
+	return $output;
+	
+}
+
+
+/*
+ * Confirmation paiement
+*
+*/
+function mnhn_boutique_confirmation_paiement(){
+	global $language;
+	global $user;
+	// onunload="window.opener.location.href='http://museum.dev/fr/boutique'"
+	if($_POST['resultrans']=="P"){
+		$amount=$_POST['amount'];
+		$num_auto=$_POST['num_auto'];
+		$payment_method=commerce_payment_method_load('tipi');
+		$order = commerce_cart_order_load($user->uid);
+		$charge=array('amount'=>$amount,'currency_code'=>'EUR');
+		
+		//mnhn_boutique_transaction($payment_method, $order, $charge, $num_auto);
+		//commerce_order_status_update($order, 'completed');
+		$message='<h3 class="checked">'.t('Your purchase is completed!').'</h3>
+              <p>'.t('Follow your order in <em>your account</em> when logged in').'.</p>
+			<a href="javascript:window.close();" class="link_black">'.t('Back to homepage').'</a>';
+		
+		drupal_add_js('
+		
+			jQuery(function() {
+			    jQuery("body").attr("onunload","window.opener.location.href=\'http://'.$_SERVER['SERVER_NAME'].'\'");
+			   });
+			 ','inline');
+		
+	}
+	
+	if($_POST['resultrans']=="R"){
+		$message='<h3 class="unchecked">Un problème est survenu lors de votre paiement !</h3>
+              <a href="javascript:window.close();" class="link_black">'.t('Close').'</a>';
+	}
+	
+	
+	
+	
+	$output='<div class="logo_commande"></div><div class="page-header">
+                    
+                        <h1>&nbsp;</h1>
+                        
+                    </div>
+    
+                    <div class="page-detail-wrapper">
+                    
+                        <div id="confirm">
+
+                            <h2 class="greytitle_lg">'.t('Confirmation of the order').'</h2>
+    						'.$message.'       
+                        </div>  
+                    </div>';
+	
+
+	return $output;
+}
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function mnhn_boutique_commerce_payment_method_info() {
+	$payment_methods = array();
+
+	$payment_methods['tipi'] = array(
+			'title' => t('Paiement TIPI'),
+			'description' => t(''),
+			'active' => TRUE,
+	);
+
+	return $payment_methods;
+}
+
+
+
+
+
+// commerce_payment_example_transaction($payment_method, $order, $charge, $pane_values['name']);
+/**
+ * Creates an example payment transaction for the specified charge amount.
+ *
+ * @param $payment_method
+ *   The payment method instance object used to charge this payment.
+ *   commerce_payment_method_load('tipi');
+ * @param $order
+ *   The order object the payment applies to.
+ * @param $charge
+ *   An array indicating the amount and currency code to charge.
+ *
+ [amount] => 4396
+ [currency_code] => EUR
+ * @param $name
+ *   The name entered on the submission form.
+ */
+function mnhn_boutique_transaction($payment_method, $order, $charge, $num_auto) {
+	$transaction = commerce_payment_transaction_new('tipi', $order->order_id);
+	$transaction->instance_id = $payment_method['instance_id'];
+	$transaction->amount = $charge['amount'];
+	$transaction->currency_code = $charge['currency_code'];
+	$transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+	$transaction->message = 'Numéro d\'autorisation: '.$num_auto;
+
+	commerce_payment_transaction_save($transaction);
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// FONCTIONS TRANSVERSALES
+///////////////////////////////////////////////////////////////////////////////////
+
+
+/*
+ * AJAX
+ * Selection contenu produit
+ * 
+ */
+function mnhn_boutique_autocomplete($string = ''){
+
+	global $language;
+	$matches = array();
+
+	// Some fantasy DB table which holds cities
+	$query = db_select('node', 'n');
+
+	// Select rows that match the string
+	$return = $query
+	->fields('n', array('nid','title'))
+	->condition('n.status', '1')
+	->condition('n.language', $language->language)
+	->condition('n.title', '%' . db_like($string) . '%', 'LIKE')
+	->condition('n.type', array('produit'), 'IN')
+	->range(0, 10)
+	->execute();
+	
+	// add matches to $matches
+	foreach ($return as $row) {
+		$matches[$row->title.' ['.$row->nid.']'] = check_plain($row->title);
+	}
+
+	// return for JS
+	drupal_json_output($matches);
+
+
+
+
+}
+
+/*
+ * Reference produit
+*
+*/
+function mnhn_boutique_ref_product_id($product_id){
+	
+	$sql = 'SELECT entity_id FROM field_data_field_product_produit 
+	        where field_product_produit_product_id=:product_id';
+			$nid=db_query($sql,array(':product_id'=> $product_id))->fetchField();
+	
+	return $nid;
+}
+
+
+
+function mnhn_boutique_product_category($product_id){
+
+	$tid_cat=db_query('SELECT c.field_produit_categorie_tid
+	FROM field_data_field_produit_categorie c
+	INNER JOIN field_data_field_product_produit p on c.entity_id=p.entity_id and p.field_product_produit_product_id=:product_id',
+			array(':product_id' => $product_id))->fetchField();
+	return $tid_cat;
+
+
+}
+
+function mnhn_boutique_get_stock($id_product){
+	$stock=db_query('SELECT commerce_stock_value FROM field_data_commerce_stock where entity_id='.$id_product)->fetchField();
+	return $stock;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// PANIER
+///////////////////////////////////////////////////////////////////////////////////
+/*
+ * Nombre article panier
+*
+*/
+function mnhn_boutique_nb_article($product_id){
+	global $user;
+	$order_id = commerce_cart_order_id($user->uid);
+
+	$sql = 'SELECT count(distinct line_item_label) FROM commerce_line_item
+	        where order_id=:order_id and type=:type';
+	$nb=db_query($sql,array(':order_id'=> $order_id,':type'=> 'product'))->fetchField();
+
+	return $nb;
+}
+
+
+/*
+ * AJAX
+* Ajout d'un article au panier
+*
+*/
+function mnhn_boutique_product_add($pid,$quantity=1,$type=NULL) {
+	if ($product = commerce_product_load($pid) ) {
+		global $user;
+		 
+		$uid = $user->uid;
+		$sku=$product->sku;
+		$order_id = commerce_cart_order_id($user->uid);
+		$sql = 'SELECT quantity FROM commerce_line_item
+	        where order_id=:order_id and line_item_label=:sku';
+		$nb=db_query($sql,array(':order_id'=> $order_id,':sku'=> $sku))->fetchField();
+
+			
+
+		// Test produit déjà sélectionné
+		if($nb==0){
+			$line_item = commerce_product_line_item_new($product, $quantity);
+			$line_item->field_ticket_type['und'][]['value'] = 0;
+			$line_item->field_produit_categorie['und'][0]['value'] = $type;
+			$nid_product=mnhn_boutique_ref_product_id($pid);
+			$sql = 'SELECT field_produit_sous_titre_value FROM field_data_field_produit_sous_titre
+	        where entity_id=:nid_product';
+			$sous_titre=db_query($sql,array(':nid_product'=> $nid_product))->fetchField();
+			$line_item->field_produit_sous_titre['und'][0]['value'] = $sous_titre;
+			$line_item = commerce_cart_product_add($uid, $line_item, FALSE);
+			$sql = 'update field_data_field_produit_categorie
+        	set field_produit_categorie_tid=:tid
+	        where entity_type=:entity_type and entity_id=:entity_id';
+			db_query($sql,array(':tid'=> $type,':entity_type'=> 'commerce_line_item',':entity_id'=> $line_item->line_item_id));
+			 
+		}else{
+			$qty=$nb+1;
+			$sql = 'update commerce_line_item
+        	set quantity=:qty
+	        where order_id=:order_id and line_item_label=:sku';
+			db_query($sql,array(':qty'=> $qty,':order_id'=> $order_id,':sku'=> $sku));
+		}
+		$nb_article=mnhn_boutique_nb_article();
+		print  $nb_article;
+
+	}
+}
+
+
+
+function mnhn_boutique_adresses_submit_handler(){
+	drupal_goto('user');
+}
+
+
+
+
+function mnhn_boutique_cart_form($form, $form_state){
+	global $user;
+	$form_state['rebuild'] = FALSE;
+	$order_id = commerce_cart_order_id($user->uid);
+	$commands = array();
+	$commands[] = ajax_command_replace('.message_add_cart', 'zzzzzzzzzzzz');
+	return array('#type' => 'ajax', '#commands' => $commands);
+}
+
+
+function mnhn_boutique_empty_cart(){
+	global $user;
+	// Load the order and empty the cart
+	$order = commerce_cart_order_load($user->uid);
+	commerce_cart_order_empty($order);
+	drupal_set_message('Le panier a été vidé.');
+	// As this page won't display anything you need to redirect somewhere
+	drupal_goto('boutique');
+
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// BOUTIQUE
+///////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Liste des ressources
+ *
+ * @param $search => string
+ *
+ */
+function mnhn_boutique_liste($search=NULL){
+	
+	
+	
+	
+	if(arg(1)=='search'){
+		$search=arg(2);
+	}
+	
+
+	global $language;
+	
+	drupal_add_js('jQuery(function() {
+	
+	jQuery(".link_add_cart").click(function(){
+		var arg=jQuery(this).attr("rel");
+		var loading=jQuery(this).find("span");
+		loading.addClass("loading_add_card");
+		jQuery.ajax({
+			url: "/'.$language->language.'/product/add/"+jQuery(this).attr("rel"),
+			type: "POST",
+			dataType: "html",
+			success: function(data){
+				loading.removeClass("loading_add_card");
+				jQuery(".message_add_cart").show();
+				jQuery("#basket_info p strong").html(data);
+	
+			}
+		});
+	});
+	
+	 jQuery(".message_add_cart .fancybox-close").click(function(){
+		 jQuery(".message_add_cart").hide();
+	 });
+			});','inline');
+	
+	$breacrumb=array();
+	$breacrumb[]=l(t('Home'), '');
+	$breacrumb[]=l(t('Shop'), 'boutique');
+	drupal_set_breadcrumb($breacrumb);
+	
+	$query=db_select('node','n')->extend('PagerDefault');
+	$query->fields('n',array('nid'));
+	$query->condition('type','produit');
+	$query->condition('n.language',$language->language);
+	$query->condition('n.status',1);
+	
+	
+	if(arg(1)>0){
+		$query->innerJoin('taxonomy_index', 'ti', 'ti.nid=n.nid');
+		$query->condition('ti.tid',arg(1),'=');
+	}else{
+		$nid_produit_une=mnhn_content_autocomplete_nid(variable_get('mnhn_boutique_produit_une_'.$language->language, '0'));
+		$query->condition('n.nid',$nid_produit_une,'<>');
+	}
+		
+	if(!empty($search)){
+		$db_or = db_or();
+	    $db_or->condition('n.title', '%' . db_like($search) . '%', 'LIKE');
+	    //$db_or->condition('a.field_blog_accroche_value', '%' . db_like($search) . '%', 'LIKE');
+	    $query->condition($db_or);
+		
+	}
+	
+	$query->orderBy('n.title','ASC');
+	$query->limit(6);
+	$result=$query->execute();
+	
+	
+	$i=0;
+	foreach($result as $row){
+		$node=node_load($row->nid);
+		$ressources.=drupal_render(node_view($node, 'teaser'));
+		$i++;
+		
+		
+	}
+	
+	
+	if(!empty($search)){
+		$title_ressource=t('Your search <em>!search</em>: !results result(s)',array('!search' => $search,'!results'=> $i));
+	}else{
+		if(arg(1)>0){
+			$title_ressource=mnhn_content_get_term(arg(1));
+		}else{
+			$title_ressource=t('All products');
+		}
+		
+	}
+		$output='<div class="message_add_cart">
+		<div class="fancybox-close"></div>
+		'.t('The item has been added to your cart.').'
+		 <a href="/'.$language->language.'/'.drupal_get_path_alias("cart").'" class="link_anim">'.t('See the cart').'</a>
+		</div><div class="boutique-header">
+                    
+                        <h1 class="title_m">'.$title_ressource.' </h1>
+
+                    </div><div class="page-detail-wrapper">';
+	if(arg(1)==''){	
+		$output.=mnhn_boutique_focus_produit();	
+	}
+	$output.=theme('pager');
+	$output.='<div id="all-products">';
+	$output.=$ressources;
+	$output.='</div>';
+	$output.=theme('pager');
+	$output.='</div>';
+
+	return $output;
+	
+	
+	
+}
+
+/**
+ * Blocs produits associés
+ *
+ * @param $tab => liste nid associés
+ *
+ */
+function mnhn_boutique_liste_link($tab=array()){
+	
+	
+	global $language;
+	if(sizeof($tab)){
+		foreach($tab as $value){
+			$tab_nids[]=$value['nid'];
+			
+		}
+		
+		$nids = implode(",", $tab_nids);
+		
+		
+		
+		$sql = 'SELECT n.nid FROM node n
+		where n.language=:language and n.status=:status and n.nid in (:nids)
+		order by n.title asc';
+		$result=db_query($sql,array(':language'=> $language->language,':status'=> 1,':nids'=> $nids));
+		
+		foreach($result as $row){
+			$node=node_load($row->nid);
+			$ressources.=drupal_render(node_view($node, 'teaser'));
+			$i++;
+		}
+
+		$output='<div id="cross-selling"><h2>'.t('Frequently bought together').'</h2>';
+		$output.=$ressources;
+		$output.='</div>';
+	
+		return $output;
+	}
+	
+	
+}
+
+
+/*
+ *
+* Formulaire de recherche
+*
+*/
+function mnhn_boutique_search_form(){
+
+	$form['content'] = array(
+			'#title' => t('Find a product'),
+			'#type' => 'textfield',
+			'#size' => '18',
+			'#maxlength' => '132',
+	);
+
+	$form['submit'] = array(
+			'#type' => 'submit',
+			'#value' => t('OK')
+	);
+
+	return $form;
+}
+
+
+/**
+ * Handle post-validation form submission.
+ */
+function mnhn_boutique_search_form_submit($form_id, $form_state) {
+
+	$search = $form_state['values']['content'];
+	$search=strip_tags($search);
+	drupal_goto("boutique/search/".$search);
+	 
+}
+
+function mnhn_boutique_focus_produit(){
+	global $language;
+	// test focus produit
+	$nid_produit_une=mnhn_content_autocomplete_nid(variable_get('mnhn_boutique_produit_une_'.$language->language, '0'));
+	if($nid_produit_une>0){
+		$node=node_load($nid_produit_une);
+		return theme('focus-produit',array('node'=>$node));
+	}
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// MENU XL
+///////////////////////////////////////////////////////////////////////////////////
+
+function mnhn_boutique_menu_xl(){
+	
+	global $language;
+	$mlid_boutique=constant("MLID_BOUTIQUE_".strtoupper($language->language));
+	
+	//$link=menu_link_load($mlid_collection);
+	
+	
+	$menu_collection=menu_tree_all_data("menu-menu-principal");
+	
+	foreach($menu_collection as $item){
+		if($item['link']['language']==$language->language && $item['link']['mlid']==$mlid_boutique){
+				
+			
+					foreach($item['below'] as $item_child){
+						$title=$item_child['link']['link_title'];
+						$uri=variable_get('menu_image_'.$item_child['link']['mlid'],'');
+						$description=variable_get('menu_text_'.$item_child['link']['mlid'],'');
+						$image='';
+						if(!empty($uri)){
+							$image=theme('image_style', array('style_name' => 'menu', 'path' => variable_get('menu_image_'.$item_child['link']['mlid'],'')));
+						}
+						$main_link=$item_child['link']['link_path'];
+						$links = l(t('More information'),$item_child['link']['link_path'],array('attributes' => array('class' => array('link'))));
+			
+						$output.=theme('menu-xl-item', array('main_link' => $main_link,'image' => $image, 'title' => $title, 'description' => $description, 'links'=> $links));
+						
+					
+				}
+			
+		}
+   }
+	
+  
+	return $output;
+	
+	
+	
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// PREPROCESS
+///////////////////////////////////////////////////////////////////////////////////
+
+function mnhn_boutique_preprocess_html(&$variables, $hook) {
+	//print_r($variables);
+	//exit;
+	
+ 	if(arg(0)=='boutique' || (arg(0)=='node' && mnhn_content_get_content_type(arg(1))=='produit')  ){
+ 		$variables['classes_array'][] = "boutique";
+ 	}
+ 	
+	if(arg(0)=='user'){
+ 		$variables['classes_array'][] = "compte";
+ 		$variables['classes_array'][] = "museum";
+ 	}
+ 	
+	if(arg(0)=='cart' || arg(0)=='checkout'){
+ 		$variables['classes_array'][] = "panier";
+ 		$variables['classes_array'][] = "museum";	
+ 	}
+ 	
+ 	$variables['classes'] = implode(' ', $variables['classes_array']);
+ 	
+ 	if(arg(2)=='invoices'){
+ 		$order_id=db_query('select order_id from commerce_invoice where invoice_id=:invoice_id',array(':invoice_id'=>arg(3)))->fetchField();
+ 		$order_date=db_query('select changed from commerce_order where order_id=:order_id',array(':order_id'=> $order_id))->fetchField();
+ 		
+ 		$variables['head_title']='Facture n° '.date('Y',$order_date).$order_id;
+ 	}
+ 	
+}
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// BO USER
+///////////////////////////////////////////////////////////////////////////////////
+
+
+/*
+ * Header BO
+ * 
+ */
+function mnhn_boutique_header_user($title){
+	
+		global $user;
+		$account = user_load($user->uid);
+		$prenom=ucfirst(strtolower($account->field_user_prenom['und'][0]['value']));
+		$nom=ucfirst(strtolower($account->field_user_nom['und'][0]['value']));
+		$output='<h1>'.$title.'</h1>
+	        '.l(t('Log out'), 'user/logout', array('attributes' => array('class' =>  array('logout')))).'
+	        <h2>'.t('Welcome').', '.$prenom.' '.$nom.'.</h2>
+	        <p>'.l(t('click'), 'user/logout').' '.t('if you\'re not !name',array('!name' => $prenom.' '.$nom)).' </p>
+	        <p class="nb">'.t('Users are entitled to access and rectify personal data which concerns them, in line with the provisions stipulated in law N° 78.17 of 6th January 1978').'.</p>';
+			
+				
+		return $output;
+}
+
+
+
+
+function mnhn_boutique_custom_get_default_theme() {
+  return variable_get('theme_default', '0');
+}
+
+
+/*
+ * Liste des commandes
+*
+*/
+function mnhn_boutique_user_commandes(){
+	global $user;
+	
+	drupal_add_js('
+
+			jQuery(function() {
+			    jQuery("ul.menu-vertical li:eq(1)").addClass("activ");
+			 
+			   });
+			 ','inline');   
+	
+	$header_user=mnhn_boutique_header_user(t('Commandes'));
+	$output='<div class="compte-detail-wrapper"><h1>'.t('Orders').'</h1>';
+	
+	if(arg(1)==$user->uid){
+		$uid=$user->uid;
+		$output.=l(t('Log out'), 'user/logout', array('attributes' => array('class' =>  array('logout'))));
+	}else{
+		$uid=arg(1);
+		$user_profile = user_load(arg(1));
+		$output.='<h2>Commande du compte '.$user_profile->name.'</h2>';
+	}
+	
+	$output.='<br/><br/><br/><h2 class="greytitle">'.t('Summary of your orders').'</h2>';
+			
+	$query=db_select('commerce_order','o')->extend('PagerDefault');
+	$query->fields('o',array('order_id','status','changed'));
+	$query->condition('o.uid',$uid);
+	$db_or = db_or();
+	$db_or->condition('o.status', 'completed', '=');
+	$query->condition($db_or);
+	$query->orderBy('o.changed','DESC');
+	$query->limit(5);
+	$result=$query->execute();
+	
+	foreach($result as $row){
+		$output.=theme('commande',array('order_id'=>$row->order_id,'status'=>$row->status,'date'=>$row->changed));
+		
+	}	
+	
+	$output.=theme('pager');
+	$output.='</div>';
+	
+	return $output;
+}
+
+function mnhn_boutique_shipping_profile_id(){
+	global $user;
+	$order_id = commerce_cart_order_id($user->uid);
+
+	$id=db_query('SELECT commerce_customer_shipping_profile_id
+	FROM field_data_commerce_customer_shipping
+	where entity_id=:entity_id',array('entity_id' => $order_id))->fetchField();
+	return $id;
+
+}
+
+function mnhn_boutique_billing_profile_id(){
+	global $user;
+	$order_id = commerce_cart_order_id($user->uid);
+
+	$id=db_query('SELECT commerce_customer_billing_profile_id
+	FROM field_data_commerce_customer_billing
+	where entity_id=:entity_id',array('entity_id' => $order_id))->fetchField();
+	return $id;
+
+}
+
+
+
+
+
+function mnhn_boutique_custom_register($form, &$form_state) {
+
+	$form_state['redirect'] = url('checkout', array('absolute' => true));
+	$form_state['rebuild'] = TRUE;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// COMMANDE FRAIS DE LIVRAISON
+///////////////////////////////////////////////////////////////////////////////////
+
+function mnhn_boutique_rules_condition_info() {
+
+	return array(
+			'commerce_order_compare_total_product_weight' => array(
+					'label' => t('Total product weight comparison'),
+					'parameter' => array(
+							'commerce_order' => array(
+									'type' => 'commerce_order',
+									'label' => t('Order'),
+									'description' => t('The order whose product line item weights should be totalled.
+              If the specified order does not exist, the comparison will act as if it is against a weight of 0.'),
+							),
+							'operator' => array(
+									'type' => 'text',
+									'label' => t('Operator'),
+									'description' => t('The comparison operator to use against the total number of products on the order.'),
+									'default value' => '>=',
+									'options list' => 'commerce_numeric_comparison_operator_options_list',
+									'restriction' => 'input',
+							),
+							'value' => array(
+									'type' => 'text',
+									'label' => t('Weight'),
+									'default value' => 1,
+									'description' => t('The value to compare against the total weight of products on the order.'),
+							),
+					),
+					'group' => t('Commerce Order'),
+					'callbacks' => array(
+							'execute' => 'mnhn_boutique_rules_compare_total_weight',
+					),
+			)
+	);
+}
+
+function mnhn_boutique_rules_compare_total_weight($order, $operator, $value) {
+
+	if (!empty($order)) {
+		
+		$wrapper = entity_metadata_wrapper('commerce_order', $order);
+		$line_items = $wrapper->commerce_line_items;
+		
+	
+		 
+		if (!empty($line_items)) {
+			 
+			$total_weight = 0;
+			 
+			foreach ($line_items as $line_item) {
+				if (!$line_item instanceof EntityMetadataWrapper) {
+					$line_item = entity_metadata_wrapper('commerce_line_item', $line_item);
+				}
+				 
+				if($line_item->type->value() == 'product') {
+					$line_item_weight = $line_item->commerce_product->get('field_weight')->value(); //Name of the field containing the product weight.
+					$total_weight += $line_item_weight['weight'] * $line_item->quantity->value();
+					 
+				}
+			}
+			
+			
+		}
+
+		switch ($operator) {
+			case '<':
+				return $total_weight < $value;
+			case '<=':
+				return $total_weight <= $value;
+			case '=':
+				return $total_weight == $value;
+			case '>=':
+				return $total_weight >= $value;
+			case '>':
+				return $total_weight > $value;
+		}
+	}
+
+	return FALSE;
+	 
+}
+
+
+function mnhn_boutique_zone_fr(){
+
+	$zone=array('FR','MC','AD');
+	return $zone;
+}
+//flat_rate_frais_de_port
+// round mode => 0
+function mnhn_boutique_frais_port_zone($iso){
+	$zone_fr=variable_get('mnhn_boutique_fr_countries', array());
+	$zone_ue=variable_get('mnhn_boutique_ue_countries', array());;
+	if (in_array($iso, $zone_fr)) {
+		$zone='fr';
+	}elseif (in_array($iso, $zone_ue)){
+		$zone='ue';	
+	}else{
+		$zone='world';
+	}
+	
+	return $zone;
+}
+
+
+
+function mnhn_boutique_frais_port($commerce_line_item){
+	module_load_include('inc', 'commerce_line_item', 'commerce_line_item.rules');
+		
+	
+		
+		$poids_commande=mnhn_boutique_total_weight();
+
+		if($poids_commande>0){
+			
+			
+			
+		
+			
+			$profile_id_shipping=mnhn_boutique_shipping_profile_id();
+			$shipping=commerce_customer_profile_load($profile_id_shipping);
+			$shipping_country=$shipping->commerce_customer_address['und'][0]['country'];
+		
+			$zone=mnhn_boutique_frais_port_zone($shipping_country);
+			
+			
+			//$zone=mnhn_boutique_frais_port_zone($_POST['customer_profile_shipping']['commerce_customer_address']['und'][0]['country']);
+			
+			
+			$tab_tranche=mnhn_boutique_tranche_poids($zone);
+			$old_poids=0;
+			foreach($tab_tranche as $poids => $value){
+				if($poids_commande>$old_poids && $poids_commande<=$poids){
+					$frais_port=$value*100;
+				}
+				$old_poids=$poids;
+			}
+			
+			if(empty($frais_port)){
+				$frais_port=$value*100;
+			}
+			
+			
+			//commerce_line_item_unit_price_add($commerce_line_item, '300', 'flat_rate_frais_de_port', 0);
+			commerce_line_item_unit_price_amount($commerce_line_item, $frais_port, 'flat_rate_frais_de_port', 0);
+		}
+	
+	
+	 
+}
+
+function mnhn_boutique_total_weight() {
+	global $user;
+	$order = commerce_cart_order_load($user->uid);
+	$total_weight = 0;
+	$add_carton = 0;
+	if (!empty($order)) {
+
+		$wrapper = entity_metadata_wrapper('commerce_order', $order);
+		$line_items = $wrapper->commerce_line_items;
+
+
+			
+		if (!empty($line_items)) {
+
+			$total_weight = 0;
+
+			foreach ($line_items as $line_item) {
+				if (!$line_item instanceof EntityMetadataWrapper) {
+					$line_item = entity_metadata_wrapper('commerce_line_item', $line_item);
+				}
+					
+				if($line_item->type->value() == 'product') {
+				
+					//print $line_item->commerce_product->get('field_emballage_carton')->value();
+					//exit;
+					$product_id=$line_item->commerce_product->get('product_id')->value();
+					$product=commerce_product_load($product_id);
+					$tid_cat=mnhn_boutique_product_category($product_id);
+					if($product->field_emballage_carton['und'][0]['value']==1){
+						$add_carton=1;
+					}
+					
+					$line_item_weight = $line_item->commerce_product->get('field_weight')->value(); //Name of the field containing the product weight.
+					$total_weight += $line_item_weight['weight'] * $line_item->quantity->value();
+
+				}
+			}		
+				
+		}
+
+		
+	}
+	
+	if($total_weight>0){
+		// ajout poids carton par tranche de 3KG
+		if($add_carton==1){
+			$poids_carton=variable_get('mnhn_boutique_carton_poids', '0');
+			$tranche_carton=variable_get('mnhn_boutique_carton_tranche', '0');
+			$total_weight+=ceil($total_weight/$tranche_carton)*$poids_carton;
+		}
+		
+		return  $total_weight;
+	}
+
+
+}
+
+
+
+function mnhn_boutique_tranche_poids($zone) {
+
+	global $language;
+	 $tab_tranche=array();
+	
+	for($i=1;$i<=15;$i++){
+		$tranche=variable_get('mnhn_boutique_tranche_poids_'.$i, '0');
+
+		if($tranche>0){
+	   	$tab_tranche[$tranche]=variable_get('mnhn_boutique_tranche_'.$zone.'_'.$i, '0');
+			
+		}
+	  
+	  
+	}
+
+	return $tab_tranche;
+
+}
+
+
+

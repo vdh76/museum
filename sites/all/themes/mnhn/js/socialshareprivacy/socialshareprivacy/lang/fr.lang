@@ -1,0 +1,29 @@
+{
+	"services" : {
+		"facebook" : {
+            "txt_info" : "Cliquez pour activer.",
+            "txt_fb_off" : "not connected to Facebook",
+            "txt_fb_on" : "connected to Facebook",
+            "language" : "en_US",
+            "perma_display_name" : "Facebook"
+		},
+		"twitter" : {
+            "txt_info" : "Cliquez pour activer.",
+            "txt_twitter_off" : "not connected to Twitter",
+            "txt_twitter_on" : "connected to Twitter",
+            "language" : "en",
+            "perma_display_name" : "Twitter"
+		},
+		"gplus" : {
+			"txt_info" : "Cliquez pour activer.",
+            "txt_gplus_off" : "not connected to Google+",
+            "txt_gplus_on" : "connected to Google+",
+            "language" : "en",
+            "perma_display_name" : "Google+"
+		}
+	},
+	"language" : "fr",
+	"txt_help" : "Lorsque vous activez ces boutons en cliquant, les informations sont transmises à Facebook, Twitter et Google.",
+	"settings_perma" : "Agree permanent activation and data transfer:",
+	"settings" : "settings"
+}

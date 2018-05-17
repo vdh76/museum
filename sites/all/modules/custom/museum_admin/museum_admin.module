@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * @file
+ * museum_admin module
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function museum_admin_menu()
+{
+    $items = array();
+
+    $items['admin/mhnh/config_var'] = array(
+        'title' => 'Variable administrable',
+        'description' => 'variable administrable',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('museum_admin_view'),
+        'access callback' => 'user_access',
+        'access arguments' => array('mnhn'),
+        'type' => MENU_LOCAL_TASK,
+    );
+
+    return $items;
+}
+
+/**
+ * Callback hook_menu().
+ */
+function museum_admin_view()
+{
+    $form['home_no_event'] = array(
+        '#type' => 'textfield',
+        '#title' => 'Texte acueil block agenda',
+        '#description' => 'Texte alternatif si pas d\'agenda.',
+        '#required' => TRUE,
+        '#default_value' => variable_get('home_no_event', ''),
+    );
+
+    return system_settings_form($form);
+}

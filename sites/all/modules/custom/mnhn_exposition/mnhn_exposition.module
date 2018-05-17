@@ -1,0 +1,609 @@
+<?php
+// $Id$
+
+define('VID_AGENDA',3);
+define('TID_EXPOSITION',1);
+
+///////////////////////////////////////////////////////////////////////////////////
+// HOOKS
+///////////////////////////////////////////////////////////////////////////////////
+
+
+/**
+* Implements hook_block_info().
+*/
+function mnhn_exposition_block_info() {
+  
+  
+   $blocks['menu_exposition_liste'] = array(
+    'info' => t('Menu exposition liste'),
+    'status' => TRUE,
+    'region' => 'sidebar_first',
+    'weight' => 0,
+    'visibility' => 1,
+  );
+  
+   $blocks['menu_exposition'] = array(
+    'info' => t('Menu exposition'),
+    'status' => TRUE,
+    'region' => 'sidebar_first',
+    'weight' => 0,
+    'visibility' => 1,
+  );
+  
+ 
+ 
+  return $blocks;
+}
+
+/**
+* Implements hook_block_configure().
+*/
+function mnhn_exposition_block_configure($delta) {
+  $form = array();
+  
+  return $form;
+}
+
+
+
+
+/**
+* Implements hook_block_view().
+*/
+function mnhn_exposition_block_view($delta = '') {
+  switch ($delta) {
+ 
+  
+  case 'menu_exposition_liste':
+    //$block['subject'] = '';
+    if(arg(0)!='node'){
+	    $block['content'] = 'test';
+	    return $block;
+    }
+     
+  break;
+  
+   case 'menu_exposition':
+    //$block['subject'] = '';
+   	if(arg(0)=='node'){
+   		
+    	 $block['content'] = mnhn_exposition_menu_vertical();
+   		 return $block;
+   	 }
+  break;
+  
+  
+  }
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function mnhn_exposition_node_view($node, $view_mode, $langcode) {
+	global $language;
+	if($node->type=='exposition'){
+		
+		$breacrumb=array();
+		$breacrumb[]=l(t('Home'), '');
+		$breacrumb[]=l(t('Exhibitions'), 'expositions');
+		
+		drupal_set_breadcrumb($breacrumb);
+	}
+}
+
+/**
+ * Implementation of hook_theme()
+ */
+function mnhn_exposition_theme(){
+	return array(
+
+			'exposition' => array(
+					'variables' => array('exposition' => NULL),
+					'template' => 'exposition'),
+
+			'list_expo' => array(
+					'variables' => array('nid' => NULL, 'title' => NULL,'subtitle' => NULL, 'date' => NULL, 'image' => NULL, 'chapo' => NULL, 'type' => NULL, 'period' => NULL),
+					'template' => 'list_expo'),
+
+			'exposition_visuel_liste' => array(
+					'variables' => array('titre' => NULL, 'image' => NULL, 'lien' => NULL, 'position' => NULL, 'oeuvre_id' => NULL),
+					'template' => 'exposition_visuel_liste'),
+
+			'menu-xl-item-exposition' => array(
+					'variables' => array('expositions' => NULL),
+					'template' => 'menu-xl-item-exposition'),
+
+			'menu-xl-item-exposition-detail' => array(
+					'variables' => array('node' => NULL),
+					'template' => 'menu-xl-item-exposition-detail'),
+
+			'expo_homepage' => array(
+					'variables' => array('nid' => NULL, 'type' => NULL, 'title' => NULL,'subtitle' => NULL,'date' => NULL, 'image' => NULL, 'chapo' => NULL),
+					'template' => 'expo_homepage'),
+
+	);
+
+}
+
+
+
+/**
+ * Implementation of hook_menu().
+ */
+function mnhn_exposition_menu() {
+
+
+	$items['expositions'] = array(
+			'title' => 'Expositions',
+			'page callback' => 'mnhn_exposition_liste',
+			'page arguments' => array('all','html'),
+			'access arguments' => array('access content'),
+			'type' => MENU_NORMAL_ITEM,
+	);
+
+
+
+
+	$items['expositions/en-cours'] = array(
+			'title' => 'Expositions en cours',
+			'page callback' => 'mnhn_exposition_liste',
+			'page arguments' => array(1,'html'),
+			'access arguments' => array('access content'),
+			'type' => MENU_NORMAL_ITEM,
+	);
+
+
+
+	$items['expositions/a-venir'] = array(
+			'title' => 'Expositions à venir',
+			'page callback' => 'mnhn_exposition_liste',
+			'page arguments' => array(1,'html'),
+			'access arguments' => array('access content'),
+			'type' => MENU_NORMAL_ITEM,
+	);
+
+
+
+	$items['expositions/passees'] = array(
+			'title' => 'Expositions passées',
+			'page callback' => 'mnhn_exposition_liste',
+			'page arguments' => array(1,'html'),
+			'access arguments' => array('access content'),
+			'type' => MENU_NORMAL_ITEM,
+	);
+
+
+
+	$items['ajax/visuel-exposition/%node/%'] = array(
+			'title' => 'Détail visuel',
+			'page callback' => 'mnhn_exposition_visuel',
+			'access arguments' => array('access content'),
+			'type' => MENU_CALLBACK,
+	);
+
+	$items['ajax/expositions/%'] = array(
+			'page callback' => 'mnhn_exposition_liste',
+			'page arguments' => array(2,'ajax'),
+			'access arguments' => array('access content'),
+			'type' => MENU_CALLBACK,
+	);
+
+
+	return $items;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// EXPOSITIONS
+///////////////////////////////////////////////////////////////////////////////////
+
+
+/**
+ * Menu vertical
+ * Détail exposition
+ *
+ *
+ */
+function mnhn_exposition_menu_vertical(){
+	global $language;
+	
+	$menu=array('a-venir'=> t('Coming'),'en-cours' => t('Current'), 'passees' => t('Past'));
+	$list = array();
+	$periode=mnhn_exposition_periode(arg(1));
+	
+	foreach($menu as $key => $value){
+		
+			switch($key){
+				case 'en-cours':
+					$condition=' and field_exposition_date_value<='.time().' and field_exposition_date_value2>'.time().' ';
+					break;
+					
+				case 'a-venir':
+					$condition=' and field_exposition_date_value>'.time().' ';
+					break;
+		
+				case 'passees':
+					$condition=' and field_exposition_date_value2<'.time().' ';
+					break;
+			}
+		
+		
+	
+		$sql = 'SELECT n.nid,n.title FROM node n
+		INNER JOIN field_data_field_exposition_date d on d.entity_id=n.nid
+		and n.type=:type and n.status=:status and n.language=:language
+		'.$condition.' 
+		order by d.field_exposition_date_value2 desc';
+		$result=db_query($sql,array(':type' => 'exposition', ':status' => 1, ':language' => $language->language));
+		
+		
+		//$output.='<div class="exposition-liste">';
+		$list_expo=array();
+		$events=0;
+		foreach($result as $row){
+			$class_expo='';
+			if(arg(1)==$row->nid){
+				$class_expo='activ';
+			}
+			$events++;
+			$list_expo['items'][]=array('data' => l($row->title,'node/'.$row->nid), 'class' => $class_expo);
+		}	
+		
+
+		
+		$class='';
+		if($key==$periode){
+			$class='activ expanded';
+		}
+		if($events>0){
+			$class.=' submenu';
+		}	
+		$links=theme('item_list', $list_expo);
+		$list['items'][]=array('data' => '<a href="javascript:;">'.$value.'</a>'.$links, 'class' => $class);
+	
+	}
+	//print_r($list);
+	//exit;
+	
+	
+	$list['title']=t('Exhibitions');
+	$list['attributes']['class']='menu-vertical';
+	$output = theme('item_list',$list);
+	return $output;
+	
+		
+}
+
+/**
+ * ID période d'une exposition
+ *
+ * @param $nid => $nid exposition
+ *
+ * @see mnhn_exposition_menu_vertical()
+ */
+function mnhn_exposition_periode($nid){
+	
+	$sql = 'SELECT field_exposition_date_value,field_exposition_date_value2 
+	FROM field_data_field_exposition_date  where entity_id=:nid';
+	$result=db_query($sql,array(':nid' => $nid));
+	
+	foreach($result as $row){
+		if($row->field_exposition_date_value<=time() && $row->field_exposition_date_value2>time()){
+			$periode='en-cours';
+		}elseif($row->field_exposition_date_value>time()){
+			$periode='a-venir';	
+		}else{
+			$periode='passees';	
+		}
+	}
+
+	
+	return $periode;
+	
+	
+		
+}
+
+
+
+
+
+
+/**
+ * Liste des expositions
+ *
+ * @param $type => période
+ * @param $template =>
+ * Chargement direct(HTML) ou ajax
+ *
+ * @see mnhn_exposition_liste_expo()
+ *
+ */
+function mnhn_exposition_liste($type,$template='HTML'){
+	
+	
+	switch($type){
+		
+		case 'all':
+			$output=mnhn_exposition_liste_expo('a-venir',$template);
+			$output.=mnhn_exposition_liste_expo('en-cours',$template);
+			$output.=mnhn_exposition_liste_expo('passees',$template);
+			$title_expo=t('Soon at the Museum ...');
+			break;
+			
+		case 'en-cours':
+			$title_expo=t('Current ...');
+			$output=mnhn_exposition_liste_expo($type,$template);
+			break;
+			
+		case 'a-venir':
+			$title_expo=t('Soon at the Museum ...');
+			$output=mnhn_exposition_liste_expo($type,$template);
+			break;
+
+		case 'passees':
+			$title_expo=t('Past ...');
+			$output=mnhn_exposition_liste_expo($type,$template);
+			break;
+			
+	
+
+			
+	}
+	
+	if($template=='html'){	
+		$output='
+                    <div id="wrapper-exposition"> 
+	                    <div class="page-header">      
+	                        <h3>'.$title_expo.'</h3>
+	                    </div>
+	                    <div class="page-detail-wrapper">
+	                        <div class="sommaire">'.$output.theme('pager').'
+	                        </div>
+	                   </div>
+                   </div>';
+		return $output;
+	}else{
+		$output='<div class="page-detail-wrapper">
+					<div class="page-header">      
+	                        <h3>'.$title_expo.'</h3>
+	                    </div>
+                        <div class="sommaire">'.$output.theme('pager').'
+                        </div>
+                   </div>';
+		print $output;
+	}
+	
+}
+
+/**
+ * Liste des expositions
+ *
+ * @param $type => période
+ * @param $template =>
+ * Chargement direct(HTML) ou ajax
+ *
+ * @see muma_exposition_liste()
+ *
+ */
+function mnhn_exposition_liste_expo($type,$template='HTML'){
+	
+	$timestamp_aujourdhui=mktime(0,0,0,date('m'),date('d'),date('Y'));
+	global $language;
+	drupal_set_breadcrumb($breacrumb);
+	$breacrumb=array();
+	$breacrumb[]=l(t('Home'), '');
+	$breacrumb[]=l(t('Exhibitions'), 'expositions');
+		
+	$query=db_select('node','n')->extend('PagerDefault');
+	$query->fields('n',array('nid'));
+	$query->innerJoin('field_data_field_exposition_date', 'd', 'd.entity_id=n.nid');
+	$query->condition('type','exposition');
+	$query->condition('n.language',$language->language);
+	$query->condition('n.status',1);
+	
+	switch($type){
+		case 'en-cours':
+			$query->condition('d.field_exposition_date_value',$timestamp_aujourdhui,'<=');
+			$query->condition('d.field_exposition_date_value2',$timestamp_aujourdhui,'>=');
+			$query->orderBy('field_exposition_date_value2','DESC');
+			break;
+			
+		case 'a-venir':
+			$query->condition('d.field_exposition_date_value',$timestamp_aujourdhui,'>');
+			$query->orderBy('field_exposition_date_value2','DESC');
+			break;
+
+		case 'passees':
+			$query->condition('d.field_exposition_date_value2',$timestamp_aujourdhui,'<');
+			$query->orderBy('field_exposition_date_value2','DESC');
+			break;
+			
+		default:
+			$query->orderBy('field_exposition_date_value2','DESC');
+			break;	
+	}
+	
+	
+	$query->limit(5);
+	$result=$query->execute();
+	//$result=db_select($sql,array(':type' => 'exposition', ':status' => 1))->extend('PagerDefault');
+	
+	//$output.='<div class="exposition-liste">';
+	$i=0;
+	$page=$_GET['page'];
+	if(!isset($_GET['page'])){
+		$page=0;
+	}
+	
+	foreach($result as $row){
+		$node=node_load($row->nid);
+		$subtitle=$node->field_exposition_sous_titre['und'][0]['value'];
+		$date_debut=$node->field_exposition_date['und'][0]['value'];
+		$date_fin=$node->field_exposition_date['und'][0]['value2'];
+		$date=mnhn_content_format_date_medium($date_debut,$date_fin);
+		$test_expo_permanente=mnhn_exposition_permanente($nid);
+		($test_expo_permanente==1)?$date='':'';
+		$uri=$node->field_exposition_visuel['und'][0]['uri'];  
+		$uri_original=mnhn_content_uri_original($uri); 
+		$type_bloc='';
+		$chapo=$node->field_exposition_chapo['und'][0]['value'];
+		$period='';
+		
+		if($node->field_exposition_date['und'][0]['value']>time()){
+			if($i==0 && $page==0){
+				$type_bloc='a_la_une';
+				$period=t('Coming');
+				$image='<img src="'.file_create_url($uri).'" />';
+				$date=mnhn_content_format_date_medium($date_debut,$date_fin,1);
+			}else{
+				$image=theme('image_style', array('style_name' => 'menu', 'path' => $uri_original,'attributes'=>array('class'=>'vignet')));
+			}
+			
+			
+		}elseif($node->field_exposition_date['und'][0]['value']<=time() && $node->field_exposition_date['und'][0]['value2']>time()){
+			
+			if($i==0 && (arg(1)=='en-cours' || arg(2)=='en-cours') && $page==0){
+				$type_bloc='a_la_une';
+				//$period=t('Current');
+				$image='<img src="'.file_create_url($uri).'" />';
+				$date=mnhn_content_format_date_medium($date_debut,$date_fin,1);
+			}else{
+				$image=theme('image_style', array('style_name' => 'menu', 'path' => $uri_original,'attributes'=>array('class'=>'vignet')));
+			}
+			
+
+		}else{
+			$nb_expo_passees++;
+			$image=theme('image_style', array('style_name' => 'menu', 'path' => $uri_original,'attributes'=>array('class'=>'vignet')));
+			
+			
+		}
+		
+	
+		if($nb_expo_passees>0 && $test_expo_permanente==1){
+			//
+		}else{
+			$output.=theme('list_expo', array('nid' => $node->nid,'title' => $node->title,'subtitle' => $subtitle,'date' => $date,'image'=> $image,  'chapo' => $chapo,'type' => $type_bloc,'period' => $period,'attributes'=>array('class'=>'vignet')));
+		}	
+		$i++;
+		
+		
+	}
+	//$output.='</div>';
+
+	return $output;
+	
+	
+	
+}
+
+
+
+
+/**
+ * Test exposition permanente
+ *
+ * @param $nid
+ *
+ *
+ */
+function mnhn_exposition_permanente($nid){
+	
+	$test_expo_permanente=db_query('select field_expo_permanent_value from field_data_field_expo_permanent where entity_id=:nid',array(':nid'=>$nid))->fetchField();
+	return $test_expo_permanente;
+	
+}
+
+/**
+ * Visuel rattaché à une expo
+ *
+ * @param $nid
+ *
+ *
+ */
+function mnhn_exposition_visuel(){
+	$node=node_load(arg(2));
+	$field_collection_item = entity_load('field_collection_item', array(arg(3)));
+	$oeuvre=$field_collection_item[arg(3)];
+	//drupal_set_title($oeuvre->field_oeuvre_titre['und'][0]['value']);
+	print theme('exposition_visuel', array('oeuvre' => $oeuvre, 'collection' => $node->title, 'node' => $node));
+	
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// MENU XL
+///////////////////////////////////////////////////////////////////////////////////
+
+function mnhn_exposition_menu_xl(){
+	
+	global $language;
+	$timestamp_aujourdhui=mktime(0,0,0,date('m'),date('d'),date('Y'));
+	
+	// and (e.field_event_date_value2>=:date)
+	$sql = 'SELECT n.nid FROM node n
+	INNER JOIN field_data_field_exposition_date e 
+	on e.entity_id=n.nid and n.language=:language
+	and e.revision_id=n.vid and n.status=:status
+	and (e.field_exposition_date_value2>=:date)
+	order by e.field_exposition_date_value
+	LIMIT 0,3';
+	$result=db_query($sql,array(':language'=> $language->language,':status'=> 1,':date'=>$timestamp_aujourdhui));
+	foreach($result as $row){
+		$node=node_load($row->nid);
+		$output.=theme('menu-xl-item-exposition-detail', array('node' => $node));
+		
+	}
+	
+	return $output;
+	
+	
+	
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// PREPROCESS
+///////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+/**
+ * Override or insert variables into the page templates.
+ *
+ * @param $variables
+ *   An array of variables to pass to the theme template.
+ * @param $hook
+ *   The name of the template being rendered ("page" in this case.)
+ */
+function mnhn_exposition_preprocess_html(&$variables, $hook) {
+	
+ 	if(arg(0)=='expositions' || (arg(0)=='node' && mnhn_content_get_content_type(arg(1))=='exposition') ){
+ 		
+ 		$variables['classes_array'][] = "expo";
+ 		$variables['classes_array'][] = "museum";
+ 		
+ 	}
+ 	
+ 	$variables['classes'] = implode(' ', $variables['classes_array']);
+ 	
+}
+
+function mnhn_exposition_preprocess_node(&$variables) {
+
+    if($variables['type'] == 'exposition'){
+        
+        $query = 'SELECT n.nid AS nid
+        FROM node n 
+        INNER JOIN field_data_field_event_ref_exposition r 
+        ON n.nid = r.entity_id
+        WHERE  (r.field_event_ref_exposition_nid = :node_id)';
+        
+        $result = db_query($query, array(':node_id' => $variables['nid']))->fetchAll();
+        
+        $variables['nb_event'] = count($result);
+    }
+}

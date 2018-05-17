@@ -1,0 +1,6 @@
+name = Expositions itinérantes
+description = Affichage des expositions itinérantes.
+core = 7.x
+version = 1.0
+
+package = MUSEUM

@@ -1,0 +1,8 @@
+;$Id$
+name = Muséum Contact
+description = Contact
+package = MUSEUM
+core = 7.x
+version = VERSION
+files[] = mnhn_contact.module
+dependencies[] = mnhn_content

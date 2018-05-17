@@ -1,0 +1,36 @@
+/* corrections IE */
+#header-subwrapper .bigmenu .items {
+  background: url("../pics/fonds/ie_nav.png") repeat left top; }
+
+.title_bmenu, .title_bmenu_numtk, .title_bmenu_boutik, .title_bmenu2 {
+  letter-spacing: -0.03em; }
+
+ #header #header-top-menu .login {
+  right: 112px; }
+
+#bigmenu_collections .items .item_collec .link_collec .link {
+  background: url("../pics/fonds/ie_nav_collec.png") 0 0 no-repeat; }
+
+#gallery_expo .visiotabs li a, .gallerytabs li a, .pagination ul li a {
+  background: url("../pics/puces/ie_pagination.png") 0 0 no-repeat; }
+
+#gallery_expo .visiotabs li a.active, .gallerytabs li a.active, .pagination ul li a.active, .boutique .pagination li a.active, .boutique .gallerytabs li a.active, .collection .gallerytabs li a.active, .collection .menu-vertical li.activ a {
+  background: url("../pics/puces/ie_pagination_sel.png") 0 0 no-repeat; }
+
+.boutique .pagination li a, .boutique .gallerytabs li a {
+  background: url("../pics/puces/ie_pagination_boutik.png") 0 0 no-repeat; }
+
+.collection .pagination li a, .collection .gallerytabs li a {
+  background: url("../pics/puces/ie_pagination_collec.png") 0 0 no-repeat; }
+
+.more, .more2, .post .link_post, .menu-vertical li,  #bloc_agenda .bloc_content .item_agenda .text h5, .controls a, .controlsSmall a, .link_black, .panier .link, .link_back {
+  letter-spacing: -0.04em; }
+
+ #footer .footer_links li {
+  font-size: 1em; }
+
+.a_la_une .text {
+  background: url("../pics/fonds/ie_nav.png") repeat left top; }
+
+.page-detail-wrapper .text sub , #momentInner .text  sub{font-size: 1.2em;line-height: 1.3em}
+.commerce-price-formatted-components{display:block;margin:30px 55px 30px 435px;}

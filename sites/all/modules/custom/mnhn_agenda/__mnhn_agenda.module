@@ -1,0 +1,902 @@
+<?php
+// $Id$
+
+define('VID_AGENDA',3);
+define('VID_AGENDA_CIBLE',9);
+define('TID_EXPOSITION',1);
+
+
+
+/**
+* Implements hook_block_info().
+*/
+function mnhn_agenda_block_info() {
+  $blocks['event_themes'] = array(
+    'info' => t('Thématiques agenda'),
+    'status' => TRUE,
+    'region' => 'sidebar_first',
+    'weight' => 0,
+    'visibility' => 1,
+  );
+  
+  
+ 
+ 
+  return $blocks;
+}
+
+/**
+* Implements hook_block_configure().
+*/
+function mnhn_agenda_block_configure($delta) {
+  $form = array();
+  switch($delta) {
+	  case 'event_themes':
+	  	/*
+	    $form['pending_comment_count'] = array(
+	      '#type' => 'textfield',
+	      '#title' => t('Configure Number of Comments to Display'),
+	      '#size' => 6,
+	      '#description' => t('Enter the number of pending comments that will appear in the block.'),
+	      '#default_value' => variable_get('pending_comment_count', 5),
+	    );
+	    */
+	    break;
+  
+  }
+  return $form;
+}
+
+/**
+* Implements hook_block_save().
+*/
+function mnhn_agenda_block_save($delta = '', $edit = array()) {
+  switch($delta) {
+  	
+  /*
+  case 'pending_comments':
+    variable_set('pending_comment_count', (int)$edit['pending_comment_count']);
+    break;
+  }
+  */
+  }
+  return;
+}
+
+
+/**
+* Implements hook_block_view().
+*/
+function mnhn_agenda_block_view($delta = '') {
+  switch ($delta) {
+  case 'event_themes':
+    //$block['subject'] = '';
+    $block['content'] = mnhn_agenda_calendar_theme();
+    return $block;
+     
+  break;
+  
+ 
+  
+  
+  }
+}
+
+
+function mnhn_agenda_node_view(&$node, $view_mode, $langcode) {
+	global $language;
+	if($node->type=='event'){
+			$breacrumb=array();
+			$breacrumb[]=l(t('Home'), '');
+			$breacrumb[]=l(t('Calendar'), 'agenda');
+			drupal_set_breadcrumb($breacrumb);
+	}
+	
+}
+
+
+
+function mnhn_agenda_calendar_theme(){
+	global $language;
+	$tax_agenda=taxonomy_get_tree(VID_AGENDA);
+	
+	//print_r($tax_agenda);
+	//exit;
+	
+	
+	$items = array();
+	
+	foreach ($tax_agenda as $key => $item) {
+		
+		$term=taxonomy_term_load($item->tid);
+		$term_translate=i18n_taxonomy_term_name($term, $language->language);
+		
+	  $items[] = array(
+	  'data' => '<span class="bkg_calendar_legende"></span><span class="bullet"></span><a href="javascript:;">'.$term_translate.'</a>', 
+	  'class' => 'tid-'.$item->tid,
+	  );
+	}
+	
+	//print_r($items);
+	$output=theme('item_list', array('items' => $items, 'title' =>t('Calendar')));
+	
+	/*
+	$output.='<br/><br/>';
+	
+	$tax_cible=taxonomy_get_tree(VID_AGENDA_CIBLE);
+	
+	//print_r($tax_agenda);
+	//exit;
+	
+	
+	$items = array();
+	
+	foreach ($tax_cible as $key => $item) {
+	
+		$term=taxonomy_term_load($item->tid);
+		$term_translate=i18n_taxonomy_term_name($term, $language->language);
+		
+	  $items[] = array(
+	  'data' => '<span class="bkg_calendar_legende"></span><span class="bullet"></span><a href="javascript:;">'.$term_translate.'</a>', 
+	  'class' => 'tid-'.$item->tid,
+	  );
+	}
+	
+	//print_r($items);
+	$output.=theme('item_list', array('items' => $items));
+	*/
+	
+	return $output;
+}
+
+
+/**
+ * Implementation of hook_theme()
+ */
+function mnhn_agenda_theme(){
+	return array(
+		'evenement' => array(
+			'variables' => array('node' => NULL,'template'=> NULL),
+     		'template' => 'evenement'),
+	
+		'menu-xl-item-agenda' => array(
+			'variables' => array('events' => NULL),
+     		'template' => 'menu-xl-item-agenda'),
+	
+		'menu-xl-item-agenda-event' => array(
+			'variables' => array('node' => NULL),
+     		'template' => 'menu-xl-item-agenda-event'),
+	
+		'evenement_homepage' => array(
+			'variables' => array('nid' => NULL, 'title' => NULL,'subtitle' => NULL,'jour' => NULL, 'mois' => NULL, 'annee' => NULL, 'theme'=> NULLL, 'theme'=> NULL,'image'=> NULL),
+     		'template' => 'evenement_homepage'),
+		
+	);	
+	
+}	
+
+
+
+/**
+ * Implementation of hook_menu().
+ */
+function mnhn_agenda_menu() {
+	
+ $items['xml/agenda'] = array(
+    'title' => 'Export Lehavre.fr',
+	'page callback' => 'mnhn_agenda_xml',
+ 	'access arguments' => array('access content'),
+ 	'file' => 'mnhn_agenda_synchro.inc',
+    'type' => MENU_CALLBACK,
+  );	
+  
+  $items['agenda'] = array(
+    'title' => 'Agenda',
+    'page callback' => 'mnhn_agenda_calendar',
+    'access arguments' => array('access content'),
+    'type' => MENU_NORMAL_ITEM,
+
+  );
+  
+    $items['agendatest'] = array(
+    'title' => 'Agenda',
+    'page callback' => 'mnhn_agenda_calendar_test',
+    'access arguments' => array('access content'),
+    'type' => MENU_NORMAL_ITEM,
+
+  );
+  
+      
+  
+  $items['events/month/%/%'] = array(
+    'page callback' => 'mnhn_agenda_load_event',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+
+  );
+  
+  $items['events/day/%/%/%'] = array(
+    'page callback' => 'mnhn_agenda_load_event_day',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+
+  );
+  
+  
+ 
+  
+ 
+   
+  
+  $items['admin/mhnh/agenda'] = array(
+    'title' => 'Agenda',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('mnhn_agenda_calendar_admin_hebdo_settings'),
+    'access arguments' => array('mnhn'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'mnhn_agenda_admin.inc',
+    'description' => 'Fermeture hedbodmadaire - Fermetures exceptionnelles',
+    'weight' => 5,
+  );
+  
+   
+
+  
+  
+  
+  return $items;
+}
+
+
+function mnhn_agenda_menu_xl(){
+	
+	global $language;
+	$timestamp_aujourdhui=mktime(0,0,0,date('m'),date('d'),date('Y'));
+	// and (e.field_event_date_value2>=:date)
+	$sql = 'SELECT n.nid FROM node n
+	INNER JOIN field_data_field_event_date e 
+	on e.entity_id=n.nid and n.language=:language
+	and e.revision_id=n.vid and n.status=:status
+	and (e.field_event_date_value2>=:date)
+	order by e.field_event_date_value
+	LIMIT 0,3';
+	$result=db_query($sql,array(':language'=> $language->language,':status'=> 1,':date'=>$timestamp_aujourdhui));
+	foreach($result as $row){
+		$node=node_load($row->nid);
+		$output.=theme('menu-xl-item-agenda-event', array('node' => $node));
+		
+	}
+	
+	return $output;
+	
+	
+	
+}
+
+
+function mnhn_agenda_calendar($timestamp=0){
+	drupal_add_js(drupal_get_path('theme','mnhn').'/js/libs/fullcalendar.js');
+	drupal_add_js(drupal_get_path('theme','mnhn').'/js/libs/jquery.sprintf.js');
+	drupal_add_css(drupal_get_path('theme','mnhn').'/css/full_calendar.css');
+	
+	global $language;
+	if($language->language=='fr'){
+		$short_month_name='["Jan","Fev","Mar","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Dec"]';
+		$month_name='["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]';
+		$day_name='["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"]';
+	}else{
+		$short_month_name='["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec"]';
+		$month_name='["January","February","March","April","May","June","July","August","September","October","November","December"]';
+		$day_name='["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saterday"]';
+	}
+	//<link href="css/fullcalendar.css" rel="stylesheet" type="text/css" />
+	
+	if($timestamp>0){
+		// vue node
+		$month=date("m",$timestamp);
+		$year=date("Y",$timestamp);
+		$init_calendar='year: "'.date("Y",$timestamp).'",'."\n";
+		$init_calendar.='month: "'.(date("m",$timestamp)-1).'",'."\n";
+		$load_time_event=$timestamp;
+		$load_event_js='setEventLinkDetail('.arg(1).')';
+	}else{
+		$load_time_event=time();
+	}
+	// Fermetures exeptionnelles
+	for($i=1;$i<11;$i++){
+		$day_off=intval(substr(variable_get('mnhn_calendar_close_excp_'.$i, ''),0,2));
+		$month_off=substr(variable_get('mnhn_calendar_close_excp_'.$i, ''),3,2);
+		$init_day_off.='if(day=="'.$day_off.'" && month=="'.$month_off.'"){'."\n";
+		$init_day_off.='jQuery(this).addClass("fc-off");'."\n";
+		$init_day_off.='}'."\n";			
+				
+   } 
+   
+   $load_events=mnhn_agenda_list_month_events(NULL,'js');
+   $load_events=substr($load_events,0,strlen($load_events)-1);
+	drupal_add_js(
+	'
+	
+	var monthNamesShort =  '.$short_month_name.';
+	var overTimeID;
+
+	jQuery(document).ready(function() {
+	
+		jQuery(".calendar-event").live("click",setEventLink);
+	
+		jQuery(document).mousemove(function(e){
+	      jQuery("#mousePos").html(e.pageX);
+	   }); 
+		
+		var date = new Date();
+		var d = date.getDate();
+		var m = date.getMonth();
+		var y = date.getFullYear();
+		
+		jQuery("body").append(\'<div id="fc-event-over"></div>\');
+		jQuery("#fc-event-over").hover(function(){ clearTimeout(overTimeID);	}, function() { jQuery(this).html(""); } );
+		jQuery("#fc-event-over").click(function(){ 
+				jQuery("#"+jQuery(this).find("a").attr("rel")).trigger("click");
+		});
+
+		jQuery(".calendar-event").each(function(){
+			var nWidth = jQuery(this).width() - jQuery(this).children(0).width() - jQuery(this).find(">a").width() - 20;
+			jQuery(this).find(".fc-event-over-content").width(nWidth);
+			
+		});
+		
+		jQuery("#calendar").fullCalendar({
+			'.$init_calendar.'
+			monthNames: '.$month_name.',
+			monthNamesShort: monthNamesShort,
+			dayNames: '.$day_name.',
+			dayNamesShort: '.$day_name.',
+			buttonText: {
+        		prev: "'.t('Previous month').'",
+        		next: "'.t('Next month').'"
+   			 },
+			header: {
+				left: "title",
+				center: "",
+				right: "prev,next"
+			},
+			events: ['.$load_events.'],
+			firstDay: 1,
+			eventMouseover : setOverEvent,
+			eventMouseout : setOutEvent,
+			viewDisplay: SetmnhnFormat
+			
+		});
+		
+		jQuery(".fc-button-next,.fc-button-prev,.fc-button-today").live("click",function() {
+    		jQuery(".calendar-events-list,#calendar-events-details").hide();
+    		jQuery(".calendar-events .loading").show();
+    		jQuery(".calendar-events").css("margin-left","0");
+    		
+    		var month = jQuery.fullCalendar.formatDate(jQuery("#calendar").fullCalendar("getDate"),"MM");
+    		var year = jQuery.fullCalendar.formatDate(jQuery("#calendar").fullCalendar("getDate"),"yyyy");
+    		if(jQuery("#event-"+month+"-"+year).length > 0){
+    			jQuery(".calendar-events .loading").hide();
+    			jQuery("#event-"+month+"-"+year).show();
+    			jQuery("#calendar-events-details").show();
+    		}else{
+	    		jQuery.ajax({
+						  url: "/events/month/"+month+"/"+year,
+						  type: "GET",
+						  success: function(data){
+						  	
+						  	jQuery(".calendar-events .loading").hide();
+						    jQuery(".calendar-events").prepend(data);
+						    jQuery("#event-"+month+"-"+year+" .calendar-event").each(function(){
+								var nWidth = jQuery(this).width() - jQuery(this).children(0).width() - jQuery(this).find(">a").width() - 20;
+								jQuery(this).find(".fc-event-over-content").width(nWidth);
+							});
+						 	jQuery("#calendar-events-details").show();
+						  }
+						});
+			}		
+    		
+		});
+		
+		jQuery(".left-column ul li .bkg_calendar_legende").mouseover(function(){
+				var class_tid=jQuery(this).parent().attr("class");
+				
+				
+				jQuery(".fc-event").each(function(){
+					if(!jQuery(this).hasClass(class_tid)){
+						jQuery(this).fadeTo("fast", 0.3).addClass("unselect");
+					}else{
+						jQuery(this).fadeTo(1, 1).removeClass("unselect");
+					}
+				});
+				
+		});
+		
+		jQuery(".left-column ul li .bkg_calendar_legende").mouseout(function(){
+				jQuery(".fc-event").fadeTo(1, 1).removeClass("unselect")	
+		});
+		
+		
+		'.$load_event_js.'
+		
+	});
+	
+		
+
+		function SetmnhnFormat(){
+		
+			var month = jQuery.fullCalendar.formatDate(jQuery("#calendar").fullCalendar("getDate"),"MM");
+    		var year = jQuery.fullCalendar.formatDate(jQuery("#calendar").fullCalendar("getDate"),"yyyy");
+    		var height_first_day = jQuery(".fc-border-separate td:eq(0)").height();
+    		
+			jQuery(".fc-event-hori").each(function(){
+				if(!jQuery(this).hasClass("fc-corner-left")){
+					if((parseFloat(jQuery(this).css("left"))==0 && parseFloat(jQuery(this).css("top"))>(65+height_first_day))){
+						jQuery(this).find(".fc-event-title").html("&nbsp;").css("background","none");
+					}
+				}
+			});	
+			
+			jQuery(".fc-border-separate td").removeClass("fc-off");
+			
+			jQuery(".fc-border-separate td").each(function(){
+				if(!jQuery(this).hasClass("fc-other-month")){
+					var day=jQuery(this).find(".fc-day-number").html();
+					'.$init_day_off.'
+				}	
+			});	
+			
+			jQuery(".fc-border-separate tr td").each(function(){
+				if(jQuery(this).index()=='.variable_get('mnhn_calendar_close_week', 1).'){
+					jQuery(this).addClass("fc-off");
+				}
+					
+			});
+			
+			jQuery(".left-column ul li").removeClass("first").removeClass("last");
+			jQuery(".left-column ul li").fadeTo(1, 1).hide();
+			jQuery(".left-column ul li").each(function(){
+				var class_theme=jQuery(this).attr("class");
+				jQuery(".fc-event").each(function(){
+					var class_event=jQuery(this);
+					if(class_event.hasClass(class_theme)){
+					//if(countInstances(class_event,class_theme)>0){
+						jQuery(".left-column ul li."+class_theme).show();
+					}
+					
+				});
+				
+					
+			});	
+				
+				
+				
+		
+			
+			
+		}
+		
+		function countInstances(string, word) {
+			   var substrings = string.split(word);
+			   return substrings.length - 1;
+		}
+
+		
+
+		function setOverEvent(event, element, view) {
+		
+			if(!jQuery(".fc-event."+event.className).hasClass("unselect")){
+
+				var over_template = \'<div class="fc-event-over-content"><div class="date">%s</div>%s<div class="theme">%s</div><div class="title">%s</div><div class="horaire">%s</div><div class="description">%s</div><a href="javascript:;" rel="event-%s" class="event-over-link">'.t('More information').'</a></div>\';
+				jQuery("#fc-event-over").html(jQuery.vsprintf(over_template, [event.date_medium, event.image,event.title, event.title_event, event.horaire, event.description, event.id]));
+			
+				var pos_event=jQuery(this).offset();
+				var top_event=pos_event.top+jQuery(this).height();
+				var offset = jQuery(element.target).offset();
+				
+				//jQuery("#fc-event-over").offset({left: offset.left - 5, top:offset.top - (jQuery(element.target).hasClass("fc-event-title") ? 62 : 72)});	
+				jQuery("#fc-event-over").offset({left: jQuery("#mousePos").html()-120, top:top_event-202});
+				
+				var classes_event = " "+event.className+" ";
+				var arrayOfStrings = classes_event.split(",");
+				jQuery("#fc-event-over").attr("class",  arrayOfStrings[0]);
+				
+				
+				clearTimeout(overTimeID);
+			}
+			
+		}
+		
+		function setOutEvent() {
+			//return;
+			overTimeID = setTimeout(function(){
+				jQuery("#fc-event-over").html("");
+			}, 500);
+			
+		}
+	',
+	'inline');
+	
+	return '<div id="mousePos"></div><div id="calendar"></div>
+	<a name="detail"></a>
+	<div class="calendar-events">
+					<div class="loading"></div>
+					<div class="calendar-events-list select_month" id="event-'.date('m',$load_time_event).'-'.date('Y',$load_time_event).'">
+					'.mnhn_agenda_list_month_events($load_time_event).'
+					</div>
+					<div id="calendar-events-details">
+						<a href="javascript:;" onclick="backCalendarEventsList();" class="back"></a>
+						<div class="calendar-events-details-body">
+							
+						</div>
+					</div>				
+					</div>';
+}
+
+
+
+
+function mnhn_agenda_load_event(){
+	
+	$month=arg(2);
+	$year=arg(3);
+	$timestamp=mktime(0,0,0,$month,1,$year);
+	
+	print '<div class="calendar-events-list" id="event-'.$month.'-'.$year.'">'.mnhn_agenda_list_month_events($timestamp).'</div>';
+}
+
+function mnhn_agenda_load_event_day(){
+	
+	$day=arg(2);
+	$month=arg(3);
+	$year=arg(4);
+	$timestamp=mktime(0,0,0,$month,$day,$year);
+	
+	print mnhn_agenda_list_day_events($timestamp);
+}
+
+
+function mnhn_agenda_list_month_events($timestamp,$template='html'){
+	global $language;
+	$timestamp_debut=mktime(0,0,0,date('m',$timestamp),1,date('Y',$timestamp));
+	$timestamp_fin=mktime(0,0,0,date('m',$timestamp)+1,1,date('Y',$timestamp));
+	if($template=='html'){
+		$sql = 'SELECT n.nid FROM node n
+		INNER JOIN field_data_field_event_date e 
+		on e.entity_id=n.nid 
+		and e.revision_id=n.vid 
+		and n.type=:type and n.status=:status and n.language=:language
+		and ((e.field_event_date_value>=:debut and e.field_event_date_value<:fin)
+		or (e.field_event_date_value2>=:debut and e.field_event_date_value2<:fin)
+		or (e.field_event_date_value<=:debut and e.field_event_date_value2>:fin)
+		)
+		order by e.field_event_date_value';
+		$result=db_query($sql,array(':language' => $language->language,':type' => 'event', ':status' => 1, ':debut' => $timestamp_debut,':fin' => $timestamp_fin));
+	}else{
+		$sql = 'SELECT n.nid FROM node n
+		INNER JOIN field_data_field_event_date e 
+		on e.entity_id=n.nid 
+		and e.revision_id=n.vid 
+		and n.type=:type and n.status=:status and n.language=:language';
+		$result=db_query($sql,array(':language' => $language->language,':type' => 'event', ':status' => 1));
+	}
+	$i=0;
+	foreach($result as $row){
+	
+		
+		
+		$node=node_load($row->nid);
+		//print_r($node);
+		//exit;
+		//$output.=$row->nid.'<br/>';
+		$i++;	
+		$output.=theme('evenement', array('node' => $node,'template'=>$template));
+		
+		
+		
+	}
+	if($i==0){
+		$output='<div class="calendar-event">&nbsp;</div>';
+	}
+	
+	return $output;
+	
+	
+	
+}
+
+
+
+function mnhn_agenda_list_day_events($timestamp,$template='html'){
+	global $language;
+	$timestamp_debut=mktime(0,0,0,date('m',$timestamp),date('d',$timestamp),date('Y',$timestamp));
+	$timestamp_fin=mktime(0,0,0,date('m',$timestamp),date('d',$timestamp)+1,date('Y',$timestamp));
+	
+	
+	if($template=='html'){
+		$sql = 'SELECT n.nid FROM node n
+		INNER JOIN field_data_field_event_date e 
+		on e.entity_id=n.nid 
+		and e.revision_id=n.vid 
+		and n.type=:type and n.status=:status and n.language=:language
+		and ((e.field_event_date_value>=:debut and e.field_event_date_value<:fin)
+		or (e.field_event_date_value2>=:debut and e.field_event_date_value2<:fin)
+		or (e.field_event_date_value<=:debut and e.field_event_date_value2>:fin)
+		)';
+		$result=db_query($sql,array(':language' => $language->language, ':type' => 'event', ':status' => 1, ':debut' => $timestamp_debut,':fin' => $timestamp_fin));
+	}else{
+		$sql = 'SELECT n.nid FROM node n
+		INNER JOIN field_data_field_event_date e 
+		on e.entity_id=n.nid 
+		and e.revision_id=n.vid 
+		and n.type=:type and n.status=:status and n.language=:language';
+		$result=db_query($sql,array(':language' => $language->language, ':type' => 'event', ':status' => 1));
+	}
+	$i=0;
+	foreach($result as $row){
+		$node=node_load($row->nid);	
+		$date_debut=$node->field_event_date['und'][0]['value'];
+		$date_fin=$node->field_event_date['und'][0]['value2'];
+		$tid=mnhn_content_get_tid($row->nid,3);
+		$theme=mnhn_content_get_term($tid);
+		
+		
+		 						
+		
+		if($template=='html'){
+			$output.='<div class="item_agenda tid-'.$tid.'">';
+			$output.='<div class="text">';
+			$output.='<h6>'.$theme.'</h6>';
+			$output.='<h5>'.$node->title.'</h5>';
+			$output.='<a href="/'.$language->language.'/'.drupal_get_path_alias('node/'.$row->nid).'#detail" title="'.$node->title.'" class="link_agenda">'.t("More information").'</a>';
+			$output.='</div>';
+			$output.='</div>';
+		}else{
+			$output.='{id: '.$node->nid.',title: "event",start: "'.date('Y-m-d',$date_debut).'",';
+			if($date_fin>$date_debut){
+				$output.='end: "'.date('Y-m-d',$date_fin).'",';
+			 } 
+			$output.='className:"tid-'.$tid.'"},';	
+			
+		}
+		$i++;
+		
+		
+	}
+	
+	if($i>0){
+		return $output;
+	}
+	
+	
+	
+	
+	
+}
+
+
+
+
+function mnhn_agenda_calendar_bloc(){
+	drupal_add_js(drupal_get_path('theme','mnhn').'/js/libs/fullcalendar.js');
+	drupal_add_css(drupal_get_path('theme','mnhn').'/css/full_calendar_bloc.css');
+	
+	
+	
+	$load_time_event=time();
+	
+	
+	global $language;
+	if($language->language=='fr'){
+		$short_month_name='["Jan","Fev","Mar","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Dec"]';
+		$month_name='["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]';
+		$day_name='["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"]';
+		$short_day_name='["Dim","Lun","Mar","Mer","Jeu","Ven","San"]';
+	}else{
+		$short_month_name='["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec"]';
+		$month_name='["January","February","March","April","May","June","July","August","September","October","November","December"]';
+		$day_name='["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saterday"]';
+		$short_day_name='["Sun","Mon","Tue","Wed","Thu","Fry","Sat"]';
+	}
+	
+	$load_events=mnhn_agenda_list_day_events(time(),'js');
+   $load_events=substr($load_events,0,strlen($load_events)-1);
+	
+   
+	drupal_add_js(
+	'
+
+	jQuery(document).ready(function() {
+	
+		var date = new Date();
+		var d = date.getDate();
+		var m = date.getMonth();
+		var y = date.getFullYear();
+		
+		
+		jQuery("#bloc_calendar").fullCalendar({
+			
+		
+			//monthNamesShort: ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"],
+			//dayNamesShort: ["DIM","LUN","MAR","MER","JEU","VEN","SAM"],
+			monthNames: '.$month_name.',
+			monthNamesShort:'.$short_month_name.',
+			dayNames: '.$day_name.',
+			dayNamesShort: '.$short_day_name.',
+			header: {
+				left: "prev",
+				center: "title",
+				right: "next"
+			},
+			events: ['.$load_events.'],
+			firstDay: 1,
+			viewDisplay: SetmnhnBlocFormat
+		});
+		
+		/*
+		jQuery("#bloc_agenda .fc-button-next,#bloc_agenda .fc-button-prev").live("click",function() {
+    		jQuery("#bloc_agenda .calendar-events-list").hide();
+    		jQuery("#bloc_agenda .calendar-events .loading").show();
+    		
+    		
+    		var month = jQuery.fullCalendar.formatDate(jQuery("#bloc_calendar").fullCalendar("getDate"),"MM");
+    		var year = jQuery.fullCalendar.formatDate(jQuery("#bloc_calendar").fullCalendar("getDate"),"yyyy");
+    		if(jQuery("#event-"+month+"-"+year).length > 0){
+    			jQuery("#bloc_agenda .calendar-events .loading").hide();
+    			jQuery("#bloc_agenda #event-"+month+"-"+year).show();
+    		}else{
+	    		jQuery.ajax({
+						  url: "/events-bloc/month/"+month+"/"+year,
+						  type: "GET",
+						  success: function(data){
+						  	
+						  	jQuery("#bloc_agenda .calendar-events .loading").hide();
+						    jQuery("#bloc_agenda .calendar-events-list").html(data);
+		
+						  }
+						});
+			}		
+    		
+		});
+		*/
+		
+	});
+	
+		
+		
+		function SetmnhnBlocFormat(){
+			jQuery(".fc-border-separate td").unbind("click");
+			jQuery(".fc-border-separate td").click(function(){
+				if(!jQuery(this).hasClass("fc-other-month")){
+						jQuery(".fc-border-separate td").removeClass("fc-today");
+						jQuery(this).addClass("fc-today");
+						jQuery("#bloc_agenda .calendar-events-list").hide();
+    					jQuery("#bloc_agenda .loading_trans").show();
+    					var day = jQuery(this).find(".fc-day-number").html();
+    					var month = jQuery.fullCalendar.formatDate(jQuery("#bloc_calendar").fullCalendar("getDate"),"MM");
+    					var year = jQuery.fullCalendar.formatDate(jQuery("#bloc_calendar").fullCalendar("getDate"),"yyyy");
+    					
+						
+						jQuery.ajax({
+						  url: "/events/day/"+day+"/"+month+"/"+year,
+						  type: "GET",
+						  success: function(data){
+						  	
+						  	jQuery("#bloc_agenda .loading_trans").hide();
+						    jQuery("#bloc_agenda .calendar-events-list").html(data).show();
+						    
+						 	
+						  }
+						});
+						
+				}
+			});
+		}
+		
+	
+
+		
+
+		
+		
+		
+	',
+	'inline');
+	
+	return '<div id="bloc_calendar"></div>
+				<div class="bloc_content">
+                               
+                                <h4>À cette date</h4>
+                                <div class="loading_trans"></div>
+                                <div class="calendar-events-list">
+							'.mnhn_agenda_list_day_events(time()).'
+							</div>
+				</div>';
+}
+ 
+
+
+/**
+ * Override or insert variables into the page templates.
+ *
+ * @param $variables
+ *   An array of variables to pass to the theme template.
+ * @param $hook
+ *   The name of the template being rendered ("page" in this case.)
+ */
+/* -- Delete this line if you want to use this function */
+function mnhn_agenda_preprocess_page(&$variables, $hook) {
+	//print_r($variables);
+	//exit;
+	
+	
+	if( (arg(0)=='node' && mnhn_content_get_content_type(arg(1))=='event' && arg(2)=='edit') || (arg(0)=='node' && arg(1)=='add' && arg(2)=='event') ){
+		
+		
+		
+		
+		drupal_add_js(
+		'jQuery(document).ready( function () {
+			jQuery("#edit-field-event-description-und-0-summary").css("height","50px");
+			jQuery("#edit-field-event-description-und-0-summary").keyup(function(){
+				limitText(jQuery(this),120);
+			});
+			jQuery("#edit-field-event-description-und-0-summary").keydown(function(){
+				limitText(jQuery(this),120);
+			});
+			
+		});',
+		'inline');
+		
+	}	
+	
+ 
+}
+
+function mnhn_agenda_preprocess_html(&$variables, $hook) {
+	
+ 	if(arg(0)=='agenda' || (arg(0)=='node' && mnhn_content_get_content_type(arg(1))=='event') ){
+ 		
+ 		$variables['classes_array'][] = "section-agenda";
+ 		
+ 	}
+ 	
+ 	$variables['classes'] = implode(' ', $variables['classes_array']);
+ 	
+}
+
+function mnhn_agenda_clean_title($text, $lim) {
+	$text=strip_tags($text);
+	if (strlen($text) > $lim) {
+		
+		$text1 = substr($text,0,$lim);
+		$espace=strrpos($text1," ");
+		
+	  	if($espace) {
+		    $text1=substr($text1,0,$espace);
+	  	}
+		
+  		$output=$text1;
+  		$text2=substr($text,strlen($text1));
+  		if (strlen($text2) > $lim) {
+  			$text2 = substr($text2,0,$lim);
+  			$espace=strrpos($text2," ");
+	  		if($espace) {
+			    $text2=substr($text2,0,$espace);
+		  	}
+		  	$text2.='...';
+  		}else{
+  		}
+  		$output.=$text2;
+  		
+	} else {
+		$output=$text;
+	}	
+	
+	return $output;
+}
+
+
+
+
+

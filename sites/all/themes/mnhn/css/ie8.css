@@ -1,0 +1,54 @@
+.item_menu .link{font-size: 1em;}
+ .numeritheque #cross-selling .prdt .link, .numeritheque #all-products .prdt .link {
+      background: url("../pics/puces/link_gris.png") 0 0 no-repeat;
+      color: #424141;
+      display: block;
+      font: bold 1em/1 "Share", "Lucida Sans", "Lucida Grande", "Lucida Sans Unicode", cursive;
+      margin: 0 0 5px;
+      padding: 0 0 0 15px;
+      text-decoration: none; }
+.bt_continue .link_black{float: right;width: 170px;}
+.acces .link_black{bottom: 10px;left: 13px;position: absolute;width: 130px;}
+  
+ #gallery_expo .diapos .diapo .bkg_expo_home {
+        background: #262c30;
+        background: black;
+        color: #fff;
+        float: left;
+        height: 258px;
+        padding: 10px;
+        right: 0;
+        position: absolute;
+        width: 263px;
+        z-index: 3;
+		filter : alpha(opacity=70);
+    	opacity : 0.7;
+		}
+		
+ .post .link_post {
+    background: black url("../pics/puces/link.png") 7px center no-repeat;
+    color: #fff;
+    display: block;
+    font: bold 1.077em/28px "Share", "Lucida Sans", "Lucida Grande", "Lucida Sans Unicode", cursive;
+    padding: 0 0 0 24px;
+    text-decoration: none;
+    width: 150px; }		
+
+.title_bmenu2{font-size: 1.6em}
+.view-commerce-user-file-licenses table{width:600px}
+		
+	#bloc_newsletter .abonnement{padding-top:16px;width:120px;padding-left:5px}
+  #bloc_newsletter h3 {
+    color: #3ee64f;
+    font: bold 1.6em/1 "Share", "Lucida Sans", "Lucida Grande", "Lucida Sans Unicode", cursive;
+	 line-height: 1;
+    text-transform: none;}
+    #bloc_newsletter h3 .small {
+      font-size: 0.7em; }
+    #bloc_newsletter h3 a {
+      color: #3ee64f; }
+    #bloc_newsletter h3 strong {
+      color: #fff;
+      font-size: 1em;
+      text-transform: none; }
+#bloc_newsletter .inscription{padding-top:10px;position: absolute;z-index: 2;display:none}

@@ -1,0 +1,8 @@
+;$Id$
+name = Muséum Blog
+description = Blog
+package = MUSEUM
+core = 7.x
+version = VERSION
+files[] = mnhn_blog.module
+dependencies[] = mnhn_content

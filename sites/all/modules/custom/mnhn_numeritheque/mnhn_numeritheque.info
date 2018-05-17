@@ -1,0 +1,8 @@
+;$Id$
+name = Muséum Numérithèque
+description = NUmérithèque
+package = MUSEUM
+core = 7.x
+version = VERSION
+files[] = mnhn_numeritheque.module
+dependencies[] = mnhn_content

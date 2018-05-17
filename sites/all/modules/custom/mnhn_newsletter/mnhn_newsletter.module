@@ -1,0 +1,338 @@
+<?php
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// HOOKS
+///////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+/**
+ * Implementation of hook_menu()
+ */
+function mnhn_newsletter_menu() {
+
+   $items['la-lettre-du-museum/desinscription'] = array(
+    'title' => 'Désincription ',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('mnhn_newsletter_unsubscribe_form'),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK
+  );
+  
+
+  $items['admin/mhnh/newsletter'] = array(
+    'title' => 'La Lettre du Muséum',
+    'page callback' => 'mnhn_newsletter_export_subscription',
+    'access arguments' => array('mnhn'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'mnhn_newsletter_admin.inc',
+    'description' => 'Export inscription newsletter',
+    'weight' => 10,
+  );
+  
+  $items['admin/mhnh/newsletter/db'] = array(
+  		'title' => 'Newsletter',
+  		'page callback' => 'mnhn_newsletter_db',
+  		'access arguments' => array('mnhn'),
+  		'type' => MENU_CALLBACK,
+  );
+  
+  
+ 
+  
+  return $items;
+}
+
+
+/**
+ * Implementation of hook_user_presave()
+ */
+function mnhn_newsletter_user_presave(&$edit, $account, $category){
+	
+	if($edit['field_user_newsletter']['und']['0']['value']==1){
+		db_query('delete from mnhn_newsletter where mail=:mail',array(':mail'=>$edit['mail']));
+		db_query('insert into mnhn_newsletter select :mail,:date',array(':mail'=>$edit['mail'],':date'=>time()));	
+	}
+	
+	if($edit['field_user_newsletter']['und']['0']['value']==0){
+		db_query('delete from mnhn_newsletter where mail=:mail',array(':mail'=>$edit['mail']));
+	}
+	
+}
+
+/**
+ * Implementation of hook_mail()
+ */
+function mnhn_newsletter_mail($key, &$message, $params) {
+	global $user;
+
+	// Each message is associated with a language, which may or may not be the
+	// current user's selected language, depending on the type of e-mail being
+	// sent. This $options array is used later in the t() calls for subject
+	// and body to ensure the proper translation takes effect.
+	$options = array(
+			'langcode' => $message['language']->language,
+	);
+
+	switch ($key) {
+		// Send a simple message from the contact form.
+		case 'contact':
+			$message['subject'] = $params['objet'];
+			// Note that the message body is an array, not a string.
+			// Because this is just user-entered text, we do not need to translate it.
+
+			// Since user-entered text may have unintentional HTML entities in it like
+			// '<' or '>', we need to make sure these entities are properly escaped,
+			// as the body will later be transformed from HTML to text, meaning
+			// that a normal use of '<' will result in truncation of the message.
+			$message['body'][] = $params['message'];
+			break;
+	}
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// INSCRIPTION NEWSLETTER
+///////////////////////////////////////////////////////////////////////////////////
+
+
+/*
+ * 
+ * Formulaire inscription
+ * 
+ */
+function mnhn_newsletter_subscribe_form() {
+	global $user;
+	if($user->uid>0){
+		$default_email=$user->mail;
+	}
+	global $language;
+	drupal_add_js('
+		jQuery(function() {
+			
+			
+				jQuery("#valid_inscription_newsletter").click(function(){
+							
+							
+							var error=0;
+							var message="";
+
+							if(jQuery("#edit-email").val()==0){
+								error=1;
+								message="Veuillez renseigner votre e-mail";
+							}else{
+								   var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+								   var address = jQuery("#edit-email").val();
+								   if(reg.test(address) == false) {
+									   	error=1;
+										message="'.t('le format  de l\'e-mail est incorrect').'"; 
+								   }
+								
+							}	
+								
+							
+							if(error>0){
+								alert(message);
+							 }else{		
+							 	jQuery("#mnhn-newsletter-subscribe-form").submit();			
+						  }		
+		
+						});
+				
+			
+			
+		});','inline');
+
+ $form['#action'] = url('http://museum-lehavre.us3.list-manage.com/subscribe/post?u=2d1771e7328f53cb359941cd8&amp;id=d9b2af5ecb');
+  
+  $form['EMAIL'] = array(
+    '#type' => 'textfield',
+  	'#required' => true,
+  	'#default_value' => $default_email,
+    
+  );
+  
+ 
+ 
+	
+	 $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Ok')
+  );
+
+ 
+  		
+
+  return $form;
+}
+
+
+
+
+
+
+
+/**
+ * Handle post-validation form submission.
+ */
+function mnhn_newsletter_subscribe_form_submit($form_id, $form_state) {
+	
+	
+
+  
+  $to = $form_state['values']['email'];
+  $params = array();
+  $params['objet']='La lettre du Muséum du Havre';
+  
+  $output='Bonjour,
+  nous vous confirmons votre inscription à la lettre du Muséum d’histoire naturelle du Havre .<br/>
+  Conformément à la loi informatique et libertés du 6 janvier 1978, vous disposez d\'un droit d\'accès, de rectification et d\'opposition aux données personnelles vous concernant. 
+  Cliquez sur le lien suivant pour ne plus recevoir de mail de la part du Muséum d\'histoire naturelle du Havre : http://'.$_SERVER['SERVER_NAME'].'/la-lettre-du-museum/desinscription<br/><br/>
+  L\'équipe du Muséum d\'histoire naturelle du Havre <br/>'.$_SERVER['SERVER_NAME'];
+
+  $params['message']=$output;
+ 
+
+  
+  $language = language_default();
+  $send = TRUE;
+  $result = drupal_mail('mnhn_newsletter', 'contact', $to, $language, $params, $from, $send);
+  
+  db_query('delete from mnhn_newsletter where mail=:mail',array(':mail'=>$form_state['values']['email']));
+  db_query('insert into mnhn_newsletter select :mail,:date',array(':mail'=>$form_state['values']['email'],':date'=>time()));
+  
+  if ($result['result'] == TRUE) {
+    
+  }
+  drupal_set_message(t('Votre inscription à la lettre du Muséum a bien été prise en compte.'));
+
+  
+	  
+}
+
+/*
+ *
+* Formulaire desinscription
+*
+*/
+function mnhn_newsletter_unsubscribe_form() {
+	global $user;
+	if($user->uid>0){
+		$default_email=$user->mail;
+	}
+	global $language;
+	drupal_add_js('
+		jQuery(function() {
+		
+		
+				jQuery("#newsletter_submit").click(function(){
+				
+				
+				
+							var error_miss=0;
+							var error_wrong=0;
+							var message_miss="";
+							var message_wrong="";
+				
+
+				
+							if(jQuery("#edit-email").val()==0){
+								error_miss=1;
+								message_miss+="- E-mail\n";
+							}else{
+								   var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+								   var address = jQuery("#edit-email").val();
+								   if(reg.test(address) == false) {
+									   	error_wrong=1;
+										message_wrong+="'.t('le format  de l\'email est incorrect').'.\n";
+								   }
+
+							}
+
+				
+							if(error_wrong>0 || error_miss>0){
+
+								if(error_miss>0){
+									message_miss="'.t('Les champs suivants sont manquants').' :\n"+message_miss;
+				   				}
+								alert(message_miss+"\n"+message_wrong);
+							 }else{
+
+							 		jQuery("#mnhn-newsletter-unsubscribe-form").submit();
+
+						  }
+
+						});
+
+		
+		
+		});','inline');
+
+
+	$form['#prefix'] = '
+  		 <div class="page-header">
+                        <h1>Désincription à la lettre du Muséum</h1>
+                    </div>
+                    <div class="page-detail-wrapper">
+  						<div id="newsletter"><br/><br/>';
+
+	$form['email'] = array(
+			'#title' => 'E-mail',
+			'#type' => 'textfield',
+			'#required' => true,
+			'#default_value' => $default_email,
+
+	);
+
+
+
+
+	$form['submit'] = array(
+			'#type' => 'submit',
+			'#value' => t('Valider')
+	);
+
+
+	$form['#suffix'] = '<a href="javascript:;" class="link" id="newsletter_submit">Envoyer</a>
+			<br/><br/><span>* champs obligatoires</span>
+			</div></div>';
+
+	return $form;
+}
+
+
+
+
+
+
+
+/**
+ * Handle post-validation form submission.
+ */
+function mnhn_newsletter_unsubscribe_form_submit($form_id, $form_state) {
+	
+	$params['objet']='La lettre du Muséum du Havre';
+	
+	$output='Bonjour,<br/>nous vous confirmons votre désinscription à la lettre du Muséum du Havre.<br/><br/>
+  	L\'équipe du Muséum d\'histoire naturelle du Havre<br/>
+	'.$_SERVER['SERVER_NAME'];
+	
+	$params['message']=$output;
+	
+	$language = language_default();
+	$send = TRUE;
+	$result = drupal_mail('mnhn_newsletter', 'contact', $to, $language, $params, $from, $send);
+
+	db_query('delete from mnhn_newsletter where mail=:mail',array(':mail'=>$form_state['values']['email']));
+	drupal_set_message(t('Votre désinscription à la lettre du Muséum a bien été prise en compte.'));
+ 
+}
+
+
+
+
+
+

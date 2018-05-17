@@ -1,0 +1,91 @@
+<?php
+
+define('SLIDER_HOME_FR', 1364);
+
+function slider_home_menu()
+{
+    $items = array();
+    $items['admin/mhnh/slider']= array(
+        'title' => 'Slider Home',
+        'page callback' => 'admin_slide',
+        'access arguments' => array('mnhn'),
+        'type' => MENU_LOCAL_TASK,
+    );
+
+    return $items;
+}
+
+function admin_slide(){
+    $output = '<h1>Slider home</h1><ul class="admin-list">';
+    $output .= '<li class="leaf">' . l('Slider home FR', 'node/' . SLIDER_HOME_FR . '/edit');
+    $output .= '</ul>';
+    return $output;
+}
+
+function slider_home_block_info()
+{
+    $blocks['slider'] = array(
+        'info' => 'Slider home',
+    );
+
+    return $blocks;
+}
+
+function slider_home_block_view($delta = '')
+{
+    $block = array();
+    switch ($delta) {
+        case 'slider':
+            $block['subject'] = '';
+            $block['content'] = slider_home_slider();
+            break;
+    }
+
+    return $block;
+}
+
+function slider_home_theme()
+{
+    return array(
+        'slider_home_slider' => array(
+            'variables' => array('items' => NULL,),
+            'template' => 'theme/slider-home',
+        ),
+    );
+}
+
+function slider_home_slider()
+{
+    setlocale(LC_TIME, 'fr_FR.utf8', 'fra');
+    $today = strtotime('today midnight');
+
+    $node_slider = node_load(SLIDER_HOME_FR);
+    $slider = array();
+    //chargement des fields collections
+    foreach ($node_slider->field_sliders['und'] as $key => $value) {
+        $item_id[$key] = $value['value'];
+    }
+    $fc_slider = field_collection_item_load_multiple($item_id);
+
+    //traitement des items du slider
+    foreach ($fc_slider as $key => $item) {
+        //Date de publication
+        if ($today >= $item->field_date_pub['und'][0]['value'] && $today <= $item->field_date_pub['und'][0]['value2']) {
+            //visuel
+            $uri = $item->field_image_slide['und'][0]['uri'];
+            $slider[$key]['visuel'] = file_create_url($uri);
+
+            $slider[$key]['title'] = $item->field_titre_slide['und'][0]['value'];
+            $slider[$key]['cat'] = $item->field_cat_slide['und'][0]['value'];
+            $slider[$key]['desc'] = $item->field_body_slide['und'][0]['value'];
+            $slider[$key]['link'] = $item->field_link_slide['und'][0]['url'];
+
+            if ($item->field_date_slide['und'][0]['value']) {
+                $slider[$key]['date_d'] = strftime("%d %B %Y", $item->field_date_slide['und'][0]['value']);
+                $slider[$key]['date_f'] = strftime("%d %B %Y", $item->field_date_slide['und'][0]['value2']);
+            }
+        }
+    }
+
+    return theme('slider_home_slider', array('items' => $slider));
+}

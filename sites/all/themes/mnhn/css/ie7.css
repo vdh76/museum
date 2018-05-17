@@ -1,0 +1,62 @@
+body{
+	overflow: auto;
+	overflow-x: hidden;
+}
+#moment.expanded .page-detail-wrapper,
+#explore.expanded .page-detail-wrapper, 
+#anniv.expanded .page-detail-wrapper, 
+#abeilles.expanded .page-detail-wrapper {margin-top:50px;}
+
+ #bloc_boutique .text h4 a{font-size: inherit;color: #fff;text-decoration: none;}
+#bloc_boutique .text h5 a{font-size: inherit;color: #fff;text-decoration: none;}
+
+.title_bmenu2 {font-size: 1.7em}
+
+.item_menu .link{font-size: 1em;}
+ .numeritheque #cross-selling .prdt .link, .numeritheque #all-products .prdt .link {
+      background: url("../pics/puces/link_gris.png") 0 0 no-repeat;
+      color: #424141;
+      display: block;
+      font: bold 1em/1 "Share", "Lucida Sans", "Lucida Grande", "Lucida Sans Unicode", cursive;
+      margin: 0 0 5px;
+      padding: 0 0 0 15px;
+      text-decoration: none; }
+.bt_continue .link_black{float: right;width: 170px;}
+
+  
+ #gallery_expo .diapos .diapo .text {
+        background: #262c30;
+        background: black;
+        color: #fff;
+        float: left;
+        height: 258px;
+        padding: 10px;
+        right: 0;
+        position: absolute;
+        width: 263px;
+        z-index: 3;
+		filter : alpha(opacity=70);
+    	opacity : 0.7;
+		}
+
+
+#gallery_expo .diapos .diapo .text h2 strong{color:white}
+#gallery_expo .diapos .diapo .text .resume a{color:white}
+.calendar-events #calendar-events-details .calendar-events-details-body  .event_info{float:left;width:270px}
+#bloc_blog .entete h3 a{color: #9f9f9f;}
+#bloc_blog .entete h2 a{color:white}	
+#bigmenu_numeritheque .items .item_menu h3 a{color: #00bbc3;}
+#bigmenu_boutique .items .item_menu h3 a{color: #ff0094;}
+.acces .link_black{bottom: 10px;left: 13px;position: absolute;width: 130px;}
+ .post .link_post {
+    background: black url("../pics/puces/link.png") 7px center no-repeat;
+    color: #fff;
+    display: block;
+    font: bold 1.077em/28px "Share", "Lucida Sans", "Lucida Grande", "Lucida Sans Unicode", cursive;
+    padding: 0 0 0 24px;
+    text-decoration: none;
+    width: 150px; }		
+		
+#home_blog .entete h3 a{color: #9f9f9f;}	
+
+#header #header-top-menu .header_lang li{float:left;margin-right:2px}		

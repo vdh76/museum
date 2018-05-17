@@ -1,0 +1,615 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<link href="css/fullcalendar.css" rel="stylesheet" type="text/css" />
+<link href="css/styles.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/javascript" src="js/fullcalendar.js"></script>
+
+<script type="text/javascript" src="js/scripts.js"></script>
+<script type="text/javascript" src="js/jquery.sprintf.js"></script>
+<script type='text/javascript'>
+
+var monthNamesShort =  ['Jan','Fev','Mars','Avr','Mai','Juin','Juil','Août','Sept','Oct','Nov','Dec'];
+var overTimeID;
+
+	$(document).ready(function() {
+	
+		var date = new Date();
+		var d = date.getDate();
+		var m = date.getMonth();
+		var y = date.getFullYear();
+
+		$("body").append('<div id="fc-event-over"></div>');
+		$("#fc-event-over").hover(function(){ clearTimeout(overTimeID);	}, function() { $(this).html(''); } );
+		$("#fc-event-over").click(function(){ window.location.href = $(this).find("a").attr("href"); } );
+
+		$(".calendar-event").each(function(){
+			var nWidth = $(this).width() - $(this).children(0).width() - $(this).find(">a").width() - 20;
+			$(this).find(".fc-event-over-content").width(nWidth);
+		});
+		
+		$('#calendar').fullCalendar({
+			monthNames: ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
+			monthNamesShort: monthNamesShort,
+			dayNames: ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],
+			dayNamesShort: ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],
+			header: {
+				left: 'today',
+				center: '',
+				right: 'title,prev,next'
+			},
+			events: [
+				{
+					id: 302,
+					title: 'Exposition avec un nom long',
+					body: 'lorem ipsum dolor sit amet',
+					start: new Date(y, m, d-5),
+					end: new Date(y, m, d+3),
+					className:'tid-100',
+					url: "http://www.google.com"		
+				},
+				{
+					id: 303,
+					title: 'Repeating Event',
+					body: 'lorem ipsum dolor sit amet',
+					start: new Date(y, m, d-3, 16, 0),
+					className:'tid-101'	,
+					url: "http://www.google.com"
+				},
+				{
+					id: 304,
+					title: 'Repeating Event',
+					body: 'lorem ipsum dolor sit amet',
+					start: new Date(y, m, d+4, 16, 0),
+					className:'tid-102',
+					url: "http://www.google.com"
+				},
+				{
+					id: 305,
+					title: 'Meeting',
+					body: 'lorem ipsum dolor sit amet',
+					start: new Date(y, m, d, 10, 30),
+					className:'tid-103',
+					url: "http://www.google.com"	
+				},
+				{
+					id: 306,
+					title: 'Lunch',
+					body: 'lorem ipsum dolor sit amet',
+					start: new Date(y, m, d, 12, 0),
+					className:'tid-104',
+					url: "http://www.google.com"	
+				},
+				{
+					id: 307,
+					title: 'Birthday Party',
+					body: 'lorem ipsum dolor sit amet',
+					start: new Date(y, m, d+1, 19, 0),
+					end: new Date(y, m, d+2, 22, 30),
+					className:'tid-108'	,
+					url: "http://www.google.com"
+				}
+			],
+			firstDay: 1,
+			eventMouseover : setOverEvent,
+			eventMouseout : setOutEvent
+		});
+		
+	});
+
+
+function setOverEvent(event, element, view) {
+	var start, end;
+
+	var date_template = '<div><span class="day">%s</span><br /><span class="month">%s</span><br /><span class="year">%s</span></div>';
+	var over_template = '<div class="fc-event-over-date">%s %s</div><div class="fc-event-over-content"><span class="title">%s</span><span class="body">%s</span></div><a href="%s"></a>';
+
+	start = $.vsprintf(date_template, [event.start.getDate() , monthNamesShort[event.start.getMonth()].toUpperCase() , event.start.getFullYear()]);
+	if(event.end) end = $.vsprintf(date_template, [event.end.getDate() , monthNamesShort[event.end.getMonth()].toUpperCase() , event.end.getFullYear()]);
+
+	$("#fc-event-over").html($.vsprintf(over_template, [start, end, event.title, event.body, event.url]));
+
+	var offset = $(element.target).offset();
+	$("#fc-event-over").offset({left: offset.left - 5, top:offset.top - ($(element.target).hasClass('fc-event-title') ? 62 : 72)});
+	$("#fc-event-over").attr("class", event.className);
+
+	clearTimeout(overTimeID);
+}
+
+function setOutEvent() {
+	//return;
+	overTimeID = setTimeout(function(){
+		$("#fc-event-over").html('');
+	}, 500);
+	
+}
+
+</script>
+<meta http-equiv="X-UA-Compatible" content="IE=7" />
+</head>
+
+<body class="calendar three-column">
+
+<div id="page">
+	<div id="header">
+		<div id="header-top-menu">
+			<div class="content">
+				<div class="left-block">
+					<a href="#" class="trans">Préparer sa visite</a>
+					<a href="#" class="trans">Espace pro</a>
+					<a href="#" class="trans">Soutenir le musée</a>
+				</div>
+				<div class="right-block"><a href="#" class="image facebook"></a><a href="#" class="image twitter"></a><a href="#" class="image flickr"></a><a href="#" class="image rss"></a>
+					<input type="text" />
+					<a href="#" class="image search"></a><a href="#" class="image en"></a></div>
+			</div>
+		</div>
+		<div id="header-wrapper">
+			<div class="content">
+				<a href="/" class="logo">mnhn - Musée</a>
+				<ul class="menu">
+					<li><a href="#" class="home"></a></li>
+					<li><a href="#"  rel="menu-10">Le mnhn</a></li>
+					<li><a href="#"  rel="menu-20">Collections</a></li>
+					<li><a href="#"  rel="menu-30">Expositions</a></li>
+					<li><a href="#"  rel="menu-40">Agenda</a></li>
+					<li><a href="#"  rel="menu-50">Activités</a></li>
+					<li><a href="#"  rel="menu-60">Documentation</a></li>
+					<li><a href="#"  rel="menu-70">Infos pratiques</a></li>
+				</ul>
+			</div>
+		</div>
+		<div id="header-subwrapper">
+			<div class="content">
+				<div class="cols" id="menu-10">
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 10</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 10</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 10</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="cols" id="menu-20">
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 20</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 20</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 20</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="cols" id="menu-30">
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 30</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 30</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 30</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="cols" id="menu-40">
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 40</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 40</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 40</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="cols" id="menu-50">
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 50</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 50</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 50</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="cols" id="menu-60">
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 60</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 60</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 60</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="cols" id="menu-70">
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 70</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 70</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+					<div class="col">
+						<img src="images/img.jpg" width="180" height="80" />
+						<p class="title">Menu 70</p>
+						<p>lorem ipsum</p>
+						<ul>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+							<li><a href="">Lien</a></li>
+						</ul>
+					</div>
+				</div>
+				<div id="close-subwrapper">
+					<a href="#">Fermer</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="page-wrapper">
+		<div class="content">
+			<div class="left-column">
+				<h2>Agenda</h2>
+				<ul>
+					<li class="tid-100"><span class="bullet"></span>Exposition</li>
+					<li class="tid-101"><span class="bullet"></span>Atelier</li>
+					<li class="tid-102"><span class="bullet"></span>Visite</li>
+					<li class="tid-103"><span class="bullet"></span>Mouvement d'oeuvre</li>
+					<li class="tid-104"><span class="bullet"></span>Conférence/Colloque</li>
+					<li class="tid-105"><span class="bullet"></span>Cinéma</li>
+					<li class="tid-106"><span class="bullet"></span>Musique</li>
+					<li class="tid-107"><span class="bullet"></span>Théatre</li>
+					<li class="tid-108"><span class="bullet"></span>Danse</li>
+				</ul>
+			</div>
+			<div class="center-column">
+				<span id="calendar"></span>
+				<div class="calendar-events">
+					<div class="calendar-events-list">
+						<div class="calendar-event tid-100">
+							<div class="fc-event-over-date">
+								<div><span class="day">9</span><br><span class="month">MARS</span><br><span class="year">2012</span></div>
+								<div><span class="day">17</span><br><span class="month">MARS</span><br><span class="year">2012</span></div>
+							</div>
+							<div class="fc-event-over-content">
+								<span class="title">Exposition avec un nom long</span>
+								<span class="body">lorem ipsum dolor sit amet</span>
+								<span class="date">du XX au XX</span>
+								<p>lorem</p>
+							</div>
+							<a href="/fiche-details-agenda.php" onclick="return false;"></a>
+							<div class="fc-event-over-content-body">
+								<span>
+									<img src="images/img.jpg" width="180" height="120" />
+									<p>Atelier : <strong>LOREM</strong><br /><strong>Date :</strong> xxx<br /><strong>Horaire :</strong> xxx<br /><strong>Durée :</strong> xxx<br /><strong>Tarifs :</strong> xxx<br /><strong>Lieu :</strong> xxx<br /><strong>Animé par :</strong> xxx<br /> </p>
+								</span>
+								<p class="body">Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien ullamcorper pharetra. Vestibulum erat wisi, condimentum sed, commodo vitae, ornare sit amet, wisi. Aenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui. Donec non enim in turpis</p>
+								<strong>Voir aussi :</strong>
+								<ul>
+									<li>Lien vers une page</li>
+									<li>Lien vers une page</li>
+								</ul>
+								<br />
+								<strong>Téléchargez les documents :</strong>
+								<ul>
+									<li>Lien vers un document</li>
+									<li>Lien vers un document</li>
+								</ul>
+							</div>	
+						</div>
+
+						<div class="calendar-event tid-101">
+							<div class="fc-event-over-date">
+								<div><span class="day">9</span><br><span class="month">MARS</span><br><span class="year">2012</span></div>
+							</div>
+							<div class="fc-event-over-content">
+								<span class="title">Exposition avec un nom long</span>
+								<span class="body">lorem ipsum dolor sit amet</span>
+								<span class="date">du XX au XX</span>
+								<p>lorem</p>
+							</div>
+							<a href="/fiche-details-agenda.php" onclick="return false;"></a>
+							<div class="fc-event-over-content-body">
+								<span>
+									<img src="images/img.jpg" width="180" height="120" />
+									<p>Atelier : <strong>LOREM</strong><br /><strong>Date :</strong> xxx<br /><strong>Horaire :</strong> xxx<br /><strong>Durée :</strong> xxx<br /><strong>Tarifs :</strong> xxx<br /><strong>Lieu :</strong> xxx<br /><strong>Animé par :</strong> xxx<br /> </p>
+								</span>
+								<p class="body">Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien ullamcorper pharetra. Vestibulum erat wisi, condimentum sed, commodo vitae, ornare sit amet, wisi. Aenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui. Donec non enim in turpis</p>
+								<strong>Voir aussi :</strong>
+								<ul>
+									<li>Lien vers une page</li>
+									<li>Lien vers une page</li>
+								</ul>
+								<br />
+								<strong>Téléchargez les documents :</strong>
+								<ul>
+									<li>Lien vers un document</li>
+									<li>Lien vers un document</li>
+								</ul>
+							</div>	
+						</div>
+
+						<div class="calendar-event tid-102">
+							<div class="fc-event-over-date">
+								<div><span class="day">9</span><br><span class="month">MARS</span><br><span class="year">2012</span></div>
+								<div><span class="day">17</span><br><span class="month">MARS</span><br><span class="year">2012</span></div>
+							</div>
+							<div class="fc-event-over-content">
+								<span class="title">Exposition avec un nom long</span>
+								<span class="body">lorem ipsum dolor sit amet</span>
+								<span class="date">du XX au XX</span>
+								<p>lorem</p>
+							</div>
+							<a href="/fiche-details-agenda.php" onclick="return false;"></a>
+							<div class="fc-event-over-content-body">
+								<span>
+									<img src="images/img.jpg" width="180" height="120" />
+									<p>Atelier : <strong>LOREM</strong><br /><strong>Date :</strong> xxx<br /><strong>Horaire :</strong> xxx<br /><strong>Durée :</strong> xxx<br /><strong>Tarifs :</strong> xxx<br /><strong>Lieu :</strong> xxx<br /><strong>Animé par :</strong> xxx<br /> </p>
+								</span>
+								<p class="body">Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien ullamcorper pharetra. Vestibulum erat wisi, condimentum sed, commodo vitae, ornare sit amet, wisi. Aenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui. Donec non enim in turpis</p>
+								<strong>Voir aussi :</strong>
+								<ul>
+									<li>Lien vers une page</li>
+									<li>Lien vers une page</li>
+								</ul>
+								<br />
+								<strong>Téléchargez les documents :</strong>
+								<ul>
+									<li>Lien vers un document</li>
+									<li>Lien vers un document</li>
+								</ul>
+							</div>	
+						</div>
+
+						<div class="calendar-event tid-103">
+							<div class="fc-event-over-date">
+								<div><span class="day">9</span><br><span class="month">MARS</span><br><span class="year">2012</span></div>
+							</div>
+							<div class="fc-event-over-content">
+								<span class="title">Exposition avec un nom long</span>
+								<span class="body">lorem ipsum dolor sit amet</span>
+								<span class="date">du XX au XX</span>
+								<p>lorem</p>
+							</div>
+							<a href="/fiche-details-agenda.php" onclick="return false;"></a>
+							<div class="fc-event-over-content-body">
+								<span>
+									<img src="images/img.jpg" width="180" height="120" />
+									<p>Atelier : <strong>LOREM</strong><br /><strong>Date :</strong> xxx<br /><strong>Horaire :</strong> xxx<br /><strong>Durée :</strong> xxx<br /><strong>Tarifs :</strong> xxx<br /><strong>Lieu :</strong> xxx<br /><strong>Animé par :</strong> xxx<br /> </p>
+								</span>
+								<p class="body">Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien ullamcorper pharetra. Vestibulum erat wisi, condimentum sed, commodo vitae, ornare sit amet, wisi. Aenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui. Donec non enim in turpis</p>
+								<strong>Voir aussi :</strong>
+								<ul>
+									<li>Lien vers une page</li>
+									<li>Lien vers une page</li>
+								</ul>
+								<br />
+								<strong>Téléchargez les documents :</strong>
+								<ul>
+									<li>Lien vers un document</li>
+									<li>Lien vers un document</li>
+								</ul>
+							</div>	
+						</div>
+					</div>
+					<div id="calendar-events-details">
+						<a href="javascript:;" onclick="backCalendarEventsList();" class="back"></a>
+						<div class="calendar-events-details-body">
+							
+						</div>
+					</div>
+				</div>
+
+			</div>
+			<div class="right-column">
+				<h2>News</h2>
+			</div>
+		</div>
+	</div>
+	<div id="footer">
+		<div class="content">
+			<div>
+				<ul>
+					<li><a href="">AMAM</a></li>
+					<li><a href="">Partenaires</a></li>
+					<li><a href="">La ville</a></li>
+					<li><a href="">Contacts</a></li>
+					<li><a href="">Plan du site</a></li>
+				</ul>
+			</div>
+			<div>
+				<ul>
+					<li><a href="">Le blog</a></li>
+					<li><a href="">La lettre du mnhn</a></li>
+					<li><a href="">Carte postales numériques</a></li>
+					<li><a href="">Mentions légales & Crédits</a></li>
+				</ul>
+			</div>
+			<div>
+				<p class="title address">Adresse</p>
+				<p>2 bd Clémenceau<br />76000 Le Havre<br />Tél. <br />xx@xx.com</p>
+			</div>	
+			<div>
+				<p class="title time">Horaires</p>
+				<p>2 bd Clémenceau<br />76000 Le Havre<br />Tél. <br />xx@xx.com</p>
+			</div>	
+			<div class="last">
+				<p class="title close">Fermeture</p>
+				<p>2 bd Clémenceau<br />76000 Le Havre<br />Tél. <br />xx@xx.com</p>
+			</div>	
+		</div>
+	</div>
+</div>
+</body>
+</html>
+
+

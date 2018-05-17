@@ -1,0 +1,572 @@
+<?php
+
+// $Id$
+/**
+ * @file
+ * Module mnhn_quiz
+ */
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// HOOKS
+///////////////////////////////////////////////////////////////////////////////////
+
+
+
+/**
+ * Implementation of hook_menu()
+ */
+function mnhn_quiz_menu() {
+
+   
+  $items['node/%node/drag-drop'] = array(
+    'title' => 'Drag & Drop',
+    'page callback' => 'mnhn_quizz_drag_drop',
+    'page arguments' => array(1),
+    'access callback' => 'mnhn_quizz_drag_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+	'weight' => 10,
+  );
+  
+  $items['quizz/%'] = array(
+    'title' => 'Quiz',
+    'page callback' => 'mnhn_quizz_bloc',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  
+   $items['ajax/quizz/%/%'] = array(
+    'title' => 'Quiz',
+    'page callback' => 'mnhn_quizz_ajax_bloc',
+    'page arguments' => array(2,3),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  
+  
+  
+  return $items;
+}
+
+/**
+ * Implementation of hook_access()
+ */
+function mnhn_quizz_drag_access($node){
+	if($node->type=='quizz'){
+		return TRUE;
+	}
+	
+}
+
+/**
+ * Implementation of hook_theme()
+ */
+function mnhn_quiz_theme() {
+  return array(
+  
+     'quizz' => array(
+      'variables' => array('node'=>NULL),
+      'template' => 'quizz',
+    ),
+       
+  );
+}
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// QUIZZ
+///////////////////////////////////////////////////////////////////////////////////
+
+
+
+/*
+ * Vue Node - Onglet Drag and Drop
+ * Positionnement des réponse
+ * 
+ * 
+ */
+function mnhn_quizz_drag_drop($node){
+	
+	
+	if($node->field_quizz_question['und'][0]['value']>0){
+		foreach($node->field_quizz_question['und'] as $question_entity_id){
+			$questions[]=$question_entity_id['value'];
+		}
+		
+		$field_question = entity_load('field_collection_item', $questions);
+		
+		foreach ($field_question as $question ) {
+			
+			//print_r($question);
+			$item_id=$question->item_id;
+			$titre=$question->field_quizz_question_titre['und'][0]['value'];
+			$visuel_uri=$question->field_quizz_question_visuel['und'][0]['uri'];
+			$visuel_url=file_create_url($visuel_uri);
+			$type=$question->field_quizz_question_type['und'][0]['value'];
+			if($type=='drag'){
+				$reponses=$question->field_quizz_reponse_drag['und'];
+				
+				if(sizeof($reponses)>0){
+			        $i=0;
+			        foreach($reponses as $reponse){
+			        	
+			        	if($reponse['uri']!=''){
+				        	 $class_fixed='';
+				        	 $reponse_position=variable_get('reponse_'.$item_id.'_'.$i, '0');
+				        	 if($reponse_position!=0){
+				        	 	$class_fixed='fixed';
+				        	 }
+				             $reponse_liste.= '<div class="edit_marker '.$class_fixed.'" rel="reponse_'.$item_id.'_'.$i.'" data-coords="'.$reponse_position.'"><div class="handler"><img src="'.file_create_url($reponse['uri']).'">'.$reponse['title'].'</div></div>';
+				             $i++;
+			        	}
+			        }
+			       
+			    }
+			    
+			    
+			    $info_visuel=mnhn_content_get_image_info($visuel_url);
+			    $output.='<div class="wrap_question">';
+				    $output.='<div class="title">'.$titre.'</div>';
+					$output.='<div class="position_save">Enregistrer les positions</div>';
+					
+						$output.='<div class="wrap_bkg" style="width:'.$info_visuel['largeur'].'px;height:'.$info_visuel['hauteur'].'px;background:url('.$visuel_url.')">';
+						$output.=$reponse_liste;
+						$output.='</div>';
+				$output.='</div>';
+			    
+			    
+			    
+			
+			}
+		
+		}
+	}
+	
+	
+	
+	drupal_add_js(drupal_get_path('theme','mnhn').'/js/libs/jquery.dragndrop.js');
+
+	drupal_add_js('
+		jQuery(function() {
+			jQuery(".edit_marker").Drags({
+                handler: ".handler",
+                onMove: function(e) {
+                   //jQuery(".content").html("Div Position:(Left:" + e.pageX + " ,Top:" + e.pageY + ")");
+                   //alert("Div Position:(Left:" + e.pageX + " ,Top:" + e.pageY + ")");
+                },
+                onDrop:function(e){
+                    //jQuery(".content").html("dropped!");
+                    //alert("Div Position:(Left:" + e.pageX + " ,Top:" + e.pageY + ")");
+                }
+            });
+            
+            var left=20;
+            var top=20;
+            var largeur='.$info_visuel['largeur'].';
+            var hauteur='.$info_visuel['largeur'].';
+            
+             jQuery(".edit_marker").each(function(e){
+             
+            	    if(left>(largeur-100)){
+            	    	left=20;
+            	    	top+=150;
+            	    }
+					if(jQuery(this).hasClass("fixed")){
+						var position_fixed = jQuery(this).attr("data-coords").split(",");
+						jQuery(this).css("left",position_fixed[0]+"px").css("top",position_fixed[1]+"px");
+					}else{
+	            	 	jQuery(this).css("left",left+"px").css("top",top+"px");
+	            	 	left+=75;
+	            	} 	
+            	 	
+            	 });
+          
+            
+            jQuery(".position_save").click(function(){
+             var data_position = new Array();
+            	 jQuery(".edit_marker").each(function(e){
+            	   
+            	 	var position = jQuery(this).position();
+            	 	var id=jQuery(this).attr("rel");
+            	 	var value=jQuery(this).attr("rel")+"-"+position.left+","+position.top;
+            	 	data_position.push(value);
+            	 	
+            	 });
+            	 
+            	 jQuery.ajax({
+						url: "/ajax/marker/position/'.$node->nid.'",
+						type: "POST",
+						data: { "tab[]" : data_position},
+						success: function(data){
+							alert("Les positions ont été sauvegardées");
+						}
+					});
+            });
+
+           
+		});','inline');
+	
+	return $output;
+
+  	
+	
+}
+
+
+/*
+ * Vue Node - Onglet Drag and Drop
+* Enregistrement des réponses
+*
+*
+*/
+function mnhn_quizz_marker_position($nid){
+	
+	foreach($_POST['tab'] as $key => $value){
+		$tab = explode("-", $value);
+		variable_set($tab[0],$tab[1]);
+	}
+
+}
+
+
+
+/*
+ * Affichage du quiz
+*
+*
+*/
+function mnhn_quizz_bloc($nid){
+	
+	
+global $language;
+
+if(arg(0)=='aventure-museum'){
+	$arg_quizz='/aventure';
+}else{
+	$load_quizz='load_quiz(1);';
+}
+
+drupal_add_js(drupal_get_path('theme','mnhn').'/js/libs/jquery-ui.min.js');
+drupal_add_js('
+
+
+var correct = 0;
+var nb_item = 0;
+
+function load_quiz(step){
+	
+			jQuery(".loading_black").show();
+			jQuery.ajax({
+			  url: "/'.$language->language.'/ajax/quizz/'.$nid.'/"+step+"'.$arg_quizz.'",
+			  type: "POST",
+			  data: {},
+			  dataType: "html",
+			  success: function(data){
+			  		//fiche.prepend(data);
+			  		jQuery(".wrap_quizz_ajax").html("").css("opacity",1).prepend(data);
+			  		jQuery(".loading_black").hide();	  
+				    init();
+				    
+			 }
+	});	 
+		
+}
+
+jQuery(function() {
+		jQuery(".loading_black").hide();
+		'.$load_quizz.'
+});
+
+
+
+ 
+function init() {
+	correct=0;
+	jQuery(".btn_next_quiz" ).click(function(){
+			 correct=0;
+			var quizz_step=parseInt(jQuery(".quizz_step").attr("rel"))+1;
+			jQuery(".wrap_quizz_ajax").css("opacity",0.5);
+			jQuery(".loading_black").show();	
+			load_quiz(quizz_step);
+    });
+    
+    jQuery(".btn_prev_quiz" ).click(function(){
+     	correct=0;
+		var quizz_step=parseInt(jQuery(".quizz_step").attr("rel"))-1;
+		jQuery(".wrap_quizz_ajax").css("opacity",0.5);
+		jQuery(".loading_black").show();		
+		load_quiz(quizz_step);
+    });
+    
+   
+
+	jQuery(".btn_valid" ).live("click",function(){
+ 	
+	 	if(jQuery(".wrap_quizz .reponse").length>0){
+	 			jQuery(".feedback_ko").hide();
+	    		jQuery(".quiz_message").hide();
+	      		
+		       correct=0;
+		      
+			   if(jQuery(".wrap_quizz .reponse span.checked").parent().attr("rel")==1){
+			   		correct=1;
+		    		jQuery(".feedback_ok").show();
+		    		jQuery(".btn_next,.btn_end").fadeIn("fast",function(){
+					  jQuery.scrollTo(".quizz_step",100);		
+					 });
+					}else{
+			    	jQuery(".wrap_quizz .reponse span").removeClass("checked");
+			   		jQuery(".feedback_ko").fadeIn("fast",function(){
+					  jQuery.scrollTo(".quizz_step",100);		
+					});
+			   }
+				
+				
+	  		
+	 	}else{
+			
+		 	var nb_item = jQuery(".cardPile div").length;
+		 	jQuery(".feedback_ko").hide();
+	    	if ( correct !=  nb_item ) {
+	    		jQuery(".feedback_ko").show();
+	    		jQuery(".ui-draggable").each(function(){
+	    			if(!jQuery(this).hasClass("correct")){
+	    				jQuery(this).removeClass("ui-draggable-disabled").removeClass("ui-state-disabled").attr("style","position: relative;").attr("aria-disabled","false");
+	    			}
+	    		});
+	    		return false;
+				
+	  		}else{
+	  		    var pos=jQuery(".cardPile").position();
+	  			jQuery(".feedback_ok").css({"position":"absolute","top":pos.top}).fadeIn();
+   				jQuery(".btn_next,.btn_end").fadeIn();
+	  		}
+			
+				
+	 	}
+			
+ 		
+		if(jQuery("#aventure_step_1").is(":visible")){
+			var height=jQuery("#aventure_step_1").height();	
+			jQuery("#spaces").css("height",height+150);	
+		}
+    	
+    });
+    
+    
+    jQuery(".wrap_quizz .reponse span").click(function(){
+    	jQuery(".wrap_quizz .reponse span").removeClass("checked");
+		jQuery(this).addClass("checked");
+    });
+ 
+
+    jQuery(".cardPile div" ).draggable( {
+      containment: "#wrap_quizz",
+      stack: ".cardPile div",
+      cursor: "move",
+      revert: true
+    } );
+    
+   
+  
+  
+  
+ 
+   jQuery(".cardSlots div").each(function(e){
+
+			var position_fixed = jQuery(this).attr("data-coords").split(",");
+			jQuery(this).css("left",position_fixed[0]+"px").css("top",position_fixed[1]+"px").droppable( {
+		      accept: ".cardPile div",
+		      hoverClass: "hovered",
+		      drop: handleCardDrop
+		    });      	 	
+   });
+          
+ 
+}
+
+function handleCardDrop( event, ui ) {
+ jQuery(".quiz_message").hide();
+  var mask = jQuery(this).attr("rel");
+  var reponse = ui.draggable.attr("id");
+  var nb_item = jQuery(this).parent().find("div").length;
+  
+ 
+  // If the card was dropped to the correct slot,
+  // change the card colour, position it directly
+  // on top of the slot, and prevent it being dragged
+  // again
+  
+  
+  
+ 
+  ui.draggable.position( { of: jQuery(this), my: "left top", at: "left top" } );
+  ui.draggable.draggable( "option", "revert", false );
+ 
+  if ( mask == reponse ) {
+  	ui.draggable.draggable( "disable" );
+  	jQuery(this).droppable( "disable" );
+    ui.draggable.addClass( "correct" );
+    correct++;
+  }
+   
+  
+ 
+}
+','inline');
+
+
+	$output='<div class="wrap_quizz"><div class="wrap_quizz_ajax"></div><div class="loading_black"><div></div></div></div>';
+	
+	return $output;
+	
+	
+}
+
+/*
+ * 
+ * Affichage du quizz
+ * Chargement AJAX
+ * 
+ * 
+ */
+function mnhn_quizz_ajax_bloc($nid_quizz,$step){
+	
+	$node=node_load($nid_quizz);
+	if($node->field_quizz_question['und'][0]['value']>0){
+		foreach($node->field_quizz_question['und'] as $question_entity_id){
+			$questions[]=$question_entity_id['value'];
+		}
+		
+		$field_question = entity_load('field_collection_item', $questions);
+		$num_question=0;
+		foreach ($field_question as $question ) {
+			
+			$num_question++;
+			
+			$item_id=$question->item_id;
+			$titre=$question->field_quizz_question_titre['und'][0]['value'];
+			$visuel_uri=$question->field_quizz_question_visuel['und'][0]['uri'];
+			$visuel_url=file_create_url($visuel_uri);
+			$info_visuel=mnhn_content_get_image_info($visuel_url);
+			$type=$question->field_quizz_question_type['und'][0]['value'];
+			
+			
+			if($type=='drag' && $num_question==arg(3)){
+				
+				$feedback_ok=$question->field_quizz_feedback_ok['und'][0]['value'];
+				$feedback_ko=$question->field_quizz_feedback_ko['und'][0]['value'];
+				$reponses=$question->field_quizz_reponse_drag['und'];
+				
+				if(sizeof($reponses)>0){
+			        $i=0;
+			        foreach($reponses as $reponse){
+			        	
+			        	if($reponse['uri']!=''){
+				        	 
+				        	 $reponse_position=variable_get('reponse_'.$item_id.'_'.$i, '0');
+				        	 if($reponse_position!=0){
+				        	 	$class_fixed='fixed';
+				        	 }
+				        	 
+				        	 $reponse_liste.= '<div id="reponse_'.$item_id.'_'.$i.'" class="ui-draggable '.$class_fixed.'"><img src="'.file_create_url($reponse['uri']).'"><br/>'.$reponse['title'].'</div>';
+				        	 $reponse_mask.= '<div rel="reponse_'.$item_id.'_'.$i.'" class="ui-droppable"  data-coords="'.$reponse_position.'"></div>';
+				             //$reponse_liste.= '<div class="edit_marker '.$class_fixed.'" rel="reponse_'.$item_id.'_'.$i.'" data-coords="'.$reponse_position.'"><div class="handler"><img src="'.file_create_url($reponse['uri']).'">'.$reponse['title'].'</div></div>';
+				             $i++;
+			        	}
+			        }
+			       
+			    }
+			   
+			    $output.='<div class="cardSlots" style="width:'.$info_visuel['largeur'].'px;height:'.$info_visuel['hauteur'].'px;background:url('.$visuel_url.')">'.$reponse_mask.'</div>';
+			    $output.='<h2>'.$titre.'</h2>';
+			    $output.='<div class="cardPile">'.$reponse_liste.'</div>';
+			    
+			
+			}elseif($type=='multiple' && $num_question==arg(3)){
+				
+				if(!empty($visuel_uri)){
+					$output.=theme('image_style', array('style_name' => 'bloc_visuel', 'path' => $visuel_uri));
+				}
+				$output.='<h2><span>&ldquo;</span>'.$titre.'<span>&rdquo;</span></h2>';
+				
+				$feedback_ok=$question->field_quizz_feedback_ok['und'][0]['value'];
+				$feedback_ko=$question->field_quizz_feedback_ko['und'][0]['value'];
+				if($question->field_quizz_reponse_multiple['und'][0]['value']>0){
+					foreach($question->field_quizz_reponse_multiple['und'] as $reponse_entity_id){
+						$reponses[]=$reponse_entity_id['value'];
+					}
+				
+					$field_reponse = entity_load('field_collection_item', $reponses);
+					
+					foreach ($field_reponse as $reponse ) {
+						
+						$reponse_correct=$reponse->field_quizz_reponse_multiple_bon['und'][0]['value'];
+						$reponse_libelle=$reponse->field_quizz_reponse_multiple_val['und'][0]['value'];
+						$reponse_visuel=$reponse->field_quizz_reponse_multiple_img['und'][0]['uri'];
+						
+						$output.='<div class="reponse" rel="'.$reponse_correct.'">';
+						
+						if(!empty($reponse_visuel)){
+							$output.='<img src="'.file_create_url($reponse_visuel).'" />';
+						}
+						$output.='<span></span>';
+						$output.='<div class="libelle">'.$reponse_libelle.'</div>';
+						$output.='<div class="clearfix"></div>';
+						$output.='</div>';
+						
+					}
+				}
+				
+			    
+			    //$output.='<div class="cardPile">'.$reponse_liste.'</div>';
+				
+				
+				
+			}
+		
+		}
+	}
+
+if($step==1 && arg(4)=='aventure'){
+	$prev='<a class="btn btn_prev nav_aventure" href="javascript:;" rel="0">'.t('Previous').'</a>';
+}	
+
+if($step>1){ 
+	$prev='<a class="btn btn_prev btn_prev_quiz" href="javascript:;" rel="0">'.t('Previous').'</a>';
+}
+
+$valid='<a class="btn btn_valid" href="javascript:;">'.t('Save !quizz',array('!quizz'=>'')).'</a>';
+if($step==$num_question){
+	if(arg(4)=='aventure'){
+		$next='<a class="btn btn_next nav_aventure" rel="2" href="javascript:;">'.t('Next').'</a>';
+	}else{
+		$next='<a class="btn btn_next btn_end" href="javascript:parent.jQuery.fancybox.close()">'.t('End').'</a>';
+	}
+}else{
+	$next='<a class="btn btn_next btn_next_quiz" href="javascript:;">'.t('Next').'</a>';
+}
+$output.=$prev.$valid.$next;
+$output.='<div class="clearfix"></div>
+<div class="quiz_message feedback_ok">'.$feedback_ok.'</div>
+<div class="quiz_message feedback_ko">'.$feedback_ko.'</div>
+<div class="quizz_step" rel="'.$step.'"></div>';
+
+
+	print $output;
+	exit;
+	
+}
+
+
+
+
+
+
+
+
+

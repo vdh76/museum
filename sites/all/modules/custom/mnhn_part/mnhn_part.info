@@ -1,0 +1,7 @@
+name = Muséum partenaires
+description = Configuration des partenaires du muséum en page d'accueil
+
+core = 7.x
+version = 7.x-1.0
+
+package = MUSEUM

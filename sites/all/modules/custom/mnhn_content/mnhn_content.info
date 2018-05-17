@@ -1,0 +1,7 @@
+;$Id$
+name = Muséum Contenu
+description = Contenu générique / Menu / Header / Footer / Fonctions transversales
+package = MUSEUM
+core = 7.x
+version = VERSION
+files[] = mnhn_content.module

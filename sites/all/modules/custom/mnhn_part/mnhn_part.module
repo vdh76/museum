@@ -1,0 +1,50 @@
+<?php
+
+/**
+ * include file
+ */
+require_once DRUPAL_ROOT . '/' . drupal_get_path('module', 'mnhn_part') . '/includes/config.inc';
+
+/**
+ * Hook menu
+ */
+function mnhn_part_menu(){
+  $items = array();
+  
+  $items['admin/mhnh/partenaires'] = array(
+    'title' => 'Partenaires',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('config_mnhn_part_form'),
+    'access arguments' => array('administer content types'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 99,
+  );
+  
+  return $items;
+}
+
+
+function mnhhn_part_return_part(){
+  $output = '<ul class="part_home">';
+  
+  for ($i = 1; $i <= NB_PART; $i++) {
+    
+    if(variable_get('logo_part_' . $i, '') != ''){
+      
+      $logo = variable_get('logo_part_' . $i);
+      $url = variable_get('link_part_' . $i);
+      $title = variable_get('name_part_' . $i);
+    
+      $output .= '<li>';
+      
+        $output .= '<a href="' . $url . '" target="_blank"><img src="' . $logo . '" title="' . $title . '"></a>';
+      
+      $output .= '</li>';
+    }
+    
+  }
+  
+  $output .= '</ul>';
+  
+  return $output;
+}

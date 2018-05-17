@@ -1,0 +1,8 @@
+;$Id$
+name = Muséum Collection
+description = Liste + détail collection
+package = MUSEUM
+core = 7.x
+version = VERSION
+files[] = mnhn_collection.module
+dependencies[] = mnhn_content

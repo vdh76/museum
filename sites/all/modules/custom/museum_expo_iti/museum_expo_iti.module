@@ -1,0 +1,81 @@
+<?php
+
+require_once DRUPAL_ROOT . '/' . drupal_get_path('module', 'museum_expo_iti') . '/includes/config.inc';
+
+function museum_expo_iti_menu(){
+  $items = array();
+  $items['expositions-itinerantes'] = array(
+    'title' => 'Expositions itinérantes',
+    'page callback' => 'museum_expo_iti_accueil',
+    'access arguments' => array('access content'),
+  );
+  
+  $items['admin/mhnh/expo_iti_doc'] = array(
+    'title' => 'Configuration expositions itinérantes',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('config_museum_expo_iti_form'),
+    'access arguments' => array('administer content types'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 99,
+  );
+  
+  return $items;
+}
+
+function museum_expo_iti_theme(){
+  return array(
+    'museum_expo_iti_accueil' => array(
+      'template' => 'museum-expo-iti-accueil',
+      'arguments' => array("items" => NULL),
+    ),
+  );
+}
+
+function museum_expo_iti_accueil(){
+  //-- EXPOSITION
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', 'expo_iti')
+        ->propertyOrderBy('created', 'DESC')
+        ->pager(9, 1);
+  
+  $result = $query->execute();
+  
+  foreach ($result['node'] as $key => $value) {
+    $nodes[] = node_load($value->nid);
+  }
+ 
+  $items['nodes'] = $nodes;
+  
+  return theme('museum_expo_iti_accueil',$items);
+}
+
+function museum_expo_iti_block_info(){
+  $blocks['menu_expo_iti'] = array(
+    'info' => 'Menu expositions itinérantes',
+  );
+  return $blocks;
+}
+
+function museum_expo_iti_block_view($delta=''){  
+    $block = array();   
+    switch ($delta) { 
+    case 'menu_expo_iti':
+      $block['subject'] = '';
+      $block['content'] = museum_expo_iti_menu_block();
+          break;
+    }
+    return $block;  
+}
+
+function museum_expo_iti_menu_block(){
+  $output = '<h2>Itinérance</h2>';
+  
+  $output .= '<a style="font-size:13px;display:block;border-top: 1px solid #e1e8c9; padding: 10px;" href="' . variable_get('doc_expo_iti') . '" target="_blank">Disponibilité des expositions itinérantes</a>';
+  
+  $output .= '<br/><br/><h2>Contact</h2>';
+  
+  $output .= '<div style="font-size:13px; border-top: 1px solid #e1e8c9; padding: 0 0 0 10px;">' . variable_get('contact_expo_iti') . '</div>';
+  
+  return $output;
+}
