@@ -146,7 +146,7 @@ function mnhn_newsletter_subscribe_form() {
 			
 		});','inline');
 
- $form['#action'] = url('http://museum-lehavre.us3.list-manage.com/subscribe/post?u=2d1771e7328f53cb359941cd8&amp;id=d9b2af5ecb');
+ $form['#action'] = url('https://lehavre.us4.list-manage.com/subscribe/post?u=5529e3c0537837a8ad743c1fe&amp;id=38e19b8f0d');
   
   $form['EMAIL'] = array(
     '#type' => 'textfield',
@@ -154,8 +154,8 @@ function mnhn_newsletter_subscribe_form() {
   	'#default_value' => $default_email,
     
   );
-  
- 
+
+
  
 	
 	 $form['submit'] = array(
